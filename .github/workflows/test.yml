@@ -20,6 +20,10 @@ jobs:
         with:
           submodules: recursive
       
+      - name: Install build tools
+        run: |
+          dnf install -y vala meson ninja-build gcc
+      
       - name: Setup build
         run: meson setup build
       

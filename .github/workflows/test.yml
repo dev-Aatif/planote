@@ -33,7 +33,7 @@ jobs:
             libical-dev \
             libsecret-1-dev \
             libgtksourceview-5-dev \
-            libgxml-0.20-dev \
+            libxml2-dev \
             gobject-introspection \
             libgirepository1.0-dev
       
@@ -84,7 +84,7 @@ jobs:
             libical-dev \
             libsecret-1-dev \
             libgtksourceview-5-dev \
-            libgxml-0.20-dev \
+            libxml2-dev \
             gobject-introspection \
             libgirepository1.0-dev
       

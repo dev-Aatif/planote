@@ -46,6 +46,61 @@ public class Services.Todoist : GLib.Object {
         parser = new Json.Parser ();
     }
 
+    /**
+     * Send HTTP request with retry on transient failures.
+     * Uses exponential backoff between retries.
+     */
+    private async GLib.Bytes? send_with_retry (
+        Soup.Message message,
+        GLib.Cancellable? cancellable = null,
+        int max_retries = 3
+    ) throws Error {
+        int attempts = 0;
+        Error? last_error = null;
+        
+        while (attempts < max_retries) {
+            try {
+                return yield session.send_and_read_async (message, GLib.Priority.LOW, cancellable);
+            } catch (IOError.TIMED_OUT e) {
+                last_error = e;
+                attempts++;
+                if (attempts >= max_retries) {
+                    throw e;
+                }
+                warning ("Sync attempt %d failed (timeout), retrying in %d seconds...", attempts, attempts);
+                // Exponential backoff: 1s, 2s, 3s
+                yield sleep_ms_async (1000 * attempts);
+            } catch (IOError.CANCELLED e) {
+                // User cancelled - don't retry
+                throw e;
+            } catch (IOError.NETWORK_UNREACHABLE e) {
+                last_error = e;
+                attempts++;
+                if (attempts >= max_retries) {
+                    throw e;
+                }
+                warning ("Sync attempt %d failed (network unreachable), retrying...", attempts);
+                yield sleep_ms_async (1000 * attempts);
+            }
+        }
+        
+        if (last_error != null) {
+            throw last_error;
+        }
+        return null;
+    }
+
+    /**
+     * Async sleep helper for retry backoff.
+     */
+    private async void sleep_ms_async (uint ms) {
+        Timeout.add (ms, () => {
+            sleep_ms_async.callback ();
+            return GLib.Source.REMOVE;
+        });
+        yield;
+    }
+
     public async HttpResponse login (string _url, Objects.Source? migrate_source = null) {
         string code = _url.split ("=")[1];
         code = code.split ("&")[0];
@@ -228,7 +283,7 @@ public class Services.Todoist : GLib.Object {
      *   Sync
      */
 
-    public async void sync (Objects.Source source) {
+    public async void sync (Objects.Source source, GLib.Cancellable? cancellable = null) {
         if (source.todoist_data.access_token == null) {
             return;
         }
@@ -251,7 +306,7 @@ public class Services.Todoist : GLib.Object {
         message.set_request_body_from_bytes ("application/x-www-form-urlencoded", new GLib.Bytes (form_data.data));
 
         try {
-            GLib.Bytes stream = yield session.send_and_read_async (message, GLib.Priority.LOW, null);
+            GLib.Bytes stream = yield send_with_retry (message, cancellable);
 
             parser.load_from_data ((string) stream.get_data ());
 
@@ -387,8 +442,11 @@ public class Services.Todoist : GLib.Object {
                     }
                 }
 
-                yield queue (source);
+                yield queue (source, cancellable);
             }
+        } catch (IOError.CANCELLED e) {
+            debug ("Sync cancelled by user");
+            source.sync_failed ();
         } catch (Error e) {
             debug ("Failed to sync: " + e.message);
             source.sync_failed ();
@@ -408,7 +466,7 @@ public class Services.Todoist : GLib.Object {
      *   Queue
      */
 
-    public async void queue (Objects.Source source) {
+    public async void queue (Objects.Source source, GLib.Cancellable? cancellable = null) {
         Gee.ArrayList<Objects.Queue ?> queue_collection = Services.Database.get_default ().get_all_queue ();
         if (queue_collection.size <= 0) {
             return;
@@ -424,7 +482,7 @@ public class Services.Todoist : GLib.Object {
         message.set_request_body_from_bytes ("application/json", new Bytes (json.data));
 
         try {
-            GLib.Bytes stream = yield session.send_and_read_async (message, GLib.Priority.LOW, null);
+            GLib.Bytes stream = yield send_with_retry (message, cancellable);
 
             parser.load_from_data ((string) stream.get_data ());
 

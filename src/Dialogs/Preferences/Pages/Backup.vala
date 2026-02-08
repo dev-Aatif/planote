@@ -115,6 +115,9 @@ public class Dialogs.Preferences.Pages.Backup : Dialogs.Preferences.Pages.BasePa
         signal_map[import_button.clicked.connect (() => {
             Services.Backups.get_default ().choose_backup_file.begin ((obj, res) => {
                 GLib.File file = Services.Backups.get_default ().choose_backup_file.end (res);
+                if (file == null) {
+                    return;  // User cancelled file selection
+                }
                 Objects.Backup backup = new Objects.Backup.from_file (file);
                 view_backup (backup);
             });
@@ -167,8 +170,9 @@ public class Dialogs.Preferences.Pages.Backup : Dialogs.Preferences.Pages.BasePa
         if (backup.valid ()) {
             preferences_dialog.push_subpage (new ImportView (preferences_dialog, backup));
         } else {
-            debug ("%s", backup.error);
-            popup_toast (_("Selected file is invalid"));
+            string error_detail = backup.error != "" ? backup.error : _("Invalid backup format");
+            warning ("Backup validation failed: %s", error_detail);
+            popup_toast (_("Cannot import backup: %s").printf (error_detail));
         }
     }
 

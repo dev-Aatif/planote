@@ -671,70 +671,90 @@ public class Services.Backups : Object {
         Services.Store.instance ().reset_cache ();  // Clear in-memory caches
         Util.get_default ().create_local_source ();
 
-        // Create Sources
-        foreach (Objects.Source source in backup.sources) {
-            Services.Store.instance ().insert_source (source);
-        }
-
-        // Create Labels
-        foreach (Objects.Label item in backup.labels) {
-            Services.Store.instance ().insert_label (item);
-        }
-
-        // Create Projects
-        foreach (Objects.Project item in backup.projects) {
-            if (item.parent_id != "") {
-                Objects.Project ? project = Services.Store.instance ().get_project (item.parent_id);
-                if (project != null) {
-                    project.add_subproject_if_not_exists (item);
-                }
-            } else {
-                Services.Store.instance ().insert_project (item);
-            }
-        }
-
-        // Create Sections
-        foreach (Objects.Section item in backup.sections) {
-            Objects.Project ? project = Services.Store.instance ().get_project (item.project_id);
-            if (project != null) {
-                project.add_section_if_not_exists (item);
-            }
-        }
-
-        // Create Items
-        foreach (Objects.Item item in backup.items) {
-            if (item.has_parent) {
-                Objects.Item ? _item = Services.Store.instance ().get_item (item.parent_id);
-                if (_item != null) {
-                    _item.add_item_if_not_exists (item);
-                }
-            } else {
-                if (item.section_id != "") {
-                    Objects.Section ? section = Services.Store.instance ().get_section (item.section_id);
-                    if (section != null) {
-                        section.add_item_if_not_exists (item);
-                    }
-                } else {
-                    Objects.Project ? project = Services.Store.instance ().get_project (item.project_id);
-                    if (project != null) {
-                        project.add_item_if_not_exists (item);
-                    }
+        // Track which entity failed for error reporting
+        string failure_entity = "";
+        
+        // Wrap all entity insertions in a single transaction for atomicity
+        bool transaction_success = Services.Database.get_default ().run_transaction (() => {
+            // Create Sources
+            foreach (Objects.Source source in backup.sources) {
+                if (!Services.Database.get_default ().insert_source (source)) {
+                    failure_entity = "source: " + source.id;
+                    return false;
                 }
             }
+
+            // Create Labels
+            foreach (Objects.Label item in backup.labels) {
+                if (!Services.Database.get_default ().insert_label (item)) {
+                    failure_entity = "label: " + item.id;
+                    return false;
+                }
+            }
+
+            // Create Projects
+            foreach (Objects.Project item in backup.projects) {
+                if (!Services.Database.get_default ().insert_project (item)) {
+                    failure_entity = "project: " + item.id;
+                    return false;
+                }
+            }
+
+            // Create Sections
+            foreach (Objects.Section item in backup.sections) {
+                if (!Services.Database.get_default ().insert_section (item)) {
+                    failure_entity = "section: " + item.id;
+                    return false;
+                }
+            }
+
+            // Create Items
+            foreach (Objects.Item item in backup.items) {
+                if (!Services.Database.get_default ().insert_item (item)) {
+                    failure_entity = "item: " + item.id;
+                    return false;
+                }
+            }
+
+            // Create Notebooks
+            foreach (Objects.Notebook notebook in backup.notebooks) {
+                if (!Services.Database.get_default ().insert_notebook (notebook)) {
+                    failure_entity = "notebook: " + notebook.id;
+                    return false;
+                }
+            }
+
+            // Create Notes
+            foreach (Objects.Note note in backup.notes) {
+                if (!Services.Database.get_default ().insert_note (note)) {
+                    failure_entity = "note: " + note.id;
+                    return false;
+                }
+            }
+
+            return true;  // Commit transaction
+        });
+
+        if (!transaction_success) {
+            warning ("Backup import failed and was rolled back. Failed entity: %s", failure_entity);
+            show_error_message (_("Backup import failed. The database was rolled back to its previous state."));
+            return;
         }
 
-        // Create Notebooks
-        foreach (Objects.Notebook notebook in backup.notebooks) {
-            Services.Store.instance ().insert_notebook (notebook);
-        }
-
-        // Create Notes
-        foreach (Objects.Note note in backup.notes) {
-            Services.Store.instance ().insert_note (note);
-        }
 
         show_message ();
     }
+
+    private void show_error_message (string message) {
+        var dialog = new Adw.AlertDialog (
+            _("Import Failed"),
+            message
+        );
+
+        dialog.add_response ("ok", _("OK"));
+        dialog.present (Planote._instance.main_window);
+    }
+
 
     private void show_message () {
         var dialog = new Adw.AlertDialog (

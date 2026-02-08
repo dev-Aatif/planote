@@ -46,3 +46,22 @@ test_validation = executable(
 
 test('validation', test_validation, timeout: 30, suite: ['unit'])
 
+# Backup Unit Tests
+test_backup = executable(
+    'test-backup',
+    'test-backup.vala',
+    dependencies: [ core_dep, glib_dep, gee_dep, json_dep ],
+    install: false
+)
+
+test('backup', test_backup, timeout: 60, suite: ['unit'])
+
+# UndoManager Unit Tests
+test_undo_manager = executable(
+    'test-undo-manager',
+    'test-undo-manager.vala',
+    dependencies: [ core_dep, glib_dep, gee_dep ],
+    install: false
+)
+
+test('undo-manager', test_undo_manager, timeout: 30, suite: ['unit'])

@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <enum id="io.github.dev_aatif.planote.appearance">
+        <value nick="Dark" value="1" />
+        <value nick="Dark Blue" value="2" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.default-priority">
+        <value nick="Priority 1" value="0" />
+        <value nick="Priority 2" value="1" />
+        <value nick="Priority 3" value="2" />
+        <value nick="None" value="3" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.start-week">
+        <value nick="Sunday" value="0" />
+        <value nick="Monday" value="1" />
+        <value nick="Tuesday" value="2" />
+        <value nick="Wednesday" value="3" />
+        <value nick="Thursday" value="4" />
+        <value nick="Friday" value="5" />
+        <value nick="Saturday" value="6" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.new-tasks-position">
+        <value nick="Top" value="0" />
+        <value nick="Bottom" value="1" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.clock-format">
+        <value nick="24h" value="0" />
+        <value nick="12h" value="1" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.projects-sort-by">
+        <value nick="Custom sort order" value="0" />
+        <value nick="Alphabetically" value="1" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.projects-ordered">
+        <value nick="Ascending" value="0" />
+        <value nick="Descending" value="1" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.complete-task">
+        <value nick="Instantly" value="0" />
+        <value nick="Wait 2500 milliseconds" value="1" />
+    </enum>
+
+    <enum id="io.github.dev_aatif.planote.automatic-reminders">
+        <value nick="At due time" value="0" />
+        <value nick="10 minutes before" value="1" />
+        <value nick="30 minutes before" value="2" />
+        <value nick="45 minutes before" value="3" />
+        <value nick="1 hour before" value="4" />
+        <value nick="2 hour before" value="5" />
+        <value nick="3 hour before" value="6" />
+    </enum>
+
+    <schema path="@APP_PATH@/" id="@APP_ID@" gettext-domain="@APP_ID@">        
+        <key name="new-tasks-position" enum="io.github.dev_aatif.planote.new-tasks-position">
+            <default>"Bottom"</default>
+            <summary>Choose which items should be counted for the badge on the application icon</summary>
+            <description>Choose which items should be counted for the badge on the application icon</description>
+        </key>
+
+        <key name="clock-format" enum="io.github.dev_aatif.planote.clock-format">
+            <default>"24h"</default>
+            <summary></summary>
+            <description></description>
+        </key>
+
+        <key name="projects-sort-by" enum="io.github.dev_aatif.planote.projects-sort-by">
+            <default>"Custom sort order"</default>
+            <summary></summary>
+            <description></description>
+        </key>
+
+        <key name="projects-ordered" enum="io.github.dev_aatif.planote.projects-ordered">
+            <default>"Descending"</default>
+            <summary></summary>
+            <description></description>
+        </key>
+
+        <key name="complete-task" enum="io.github.dev_aatif.planote.complete-task">
+            <default>"Instantly"</default>
+            <summary>Task completion behavior</summary>
+            <description>Controls when tasks are marked as completed - instantly or with confirmation</description>
+        </key>
+
+        <key name="appearance" enum="io.github.dev_aatif.planote.appearance">
+            <default>"Dark"</default>
+            <summary>Application appearance theme</summary>
+            <description>Sets the visual theme of the application (Light, Dark, or System)</description>
+        </key>
+
+        <key name="dark-mode" type="b">
+            <default>false</default>
+            <summary>Dark Mode.</summary>
+            <description>Dark Mode.</description>
+        </key>
+
+        <key name="system-appearance" type="b">
+            <default>true</default>
+            <summary>Follow system appearance</summary>
+            <description>Automatically switch between light and dark themes based on system settings</description>
+        </key>
+
+        <key name="default-priority" enum="io.github.dev_aatif.planote.default-priority">
+            <default>"None"</default>
+            <summary>Default task priority</summary>
+            <description>Sets the default priority level for new tasks</description>
+        </key>
+
+        <key name="start-week" enum="io.github.dev_aatif.planote.start-week">
+            <default>"Monday"</default>
+            <summary>First day of the week</summary>
+            <description>Sets which day should be considered the first day of the week in calendar views</description>
+        </key>
+
+        <key name="window-maximized" type="b">
+            <default>false</default>
+            <summary>Whether the window was maximized on last run</summary>
+            <description>Stores the maximized state of the main window to restore it when the application is reopened</description>
+        </key>
+
+        <key name="quick-add-project-selected" type="s">
+            <default>""</default>
+            <summary>Last selected project in quick add</summary>
+            <description>Remembers the last project selected when using the quick add feature</description>
+        </key>
+
+        <key name="quick-add-section-selected" type="s">
+            <default>""</default>
+            <summary>Last selected section in quick add</summary>
+            <description>Remembers the last section selected when using the quick add feature</description>
+        </key>
+
+        <key name="quick-add-save-last-project" type="b">
+            <default>false</default>
+            <summary>Remember last project in quick add</summary>
+            <description>Automatically select the last used project when opening quick add dialog</description>
+        </key>
+
+        <key name="quick-add-close-loses-focus" type="b">
+            <default>true</default>
+            <summary>Close quick add when losing focus</summary>
+            <description>Automatically close the quick add dialog when it loses focus</description>
+        </key>
+
+        <key name="quick-add-create-more" type="b">
+            <default>false</default>
+            <summary>Keep quick add open after creating task</summary>
+            <description>Keep the quick add dialog open to create multiple tasks in succession</description>
+        </key>
+
+        <key name="window-height" type="i">
+            <default>660</default>
+            <summary>Most recent window height</summary>
+            <description>Stores the last window height in pixels to restore the window size when reopening the application</description>
+        </key>
+        
+        <key name="window-width" type="i">
+            <default>1024</default>
+            <summary>Most recent window width</summary>
+            <description>Stores the last window width in pixels to restore the window size when reopening the application</description>
+        </key>
+
+        <key name="pane-position" type="i">
+            <default>225</default>
+            <summary>Most recent pane position</summary>
+            <description>Stores the position of the sidebar pane divider in pixels to maintain the preferred layout</description>
+        </key>
+
+        <key name="today-sort-order" type="s">
+            <default>"name"</default>
+            <summary>Today view sort order</summary>
+            <description>Controls how tasks are sorted in the Today view</description>
+        </key>
+
+        <key name="scheduled-sort-order" type="s">
+            <default>"name"</default>
+            <summary>Scheduled view sort order</summary>
+            <description>Controls how tasks are sorted in the Scheduled view</description>
+        </key>
+
+        <key name="underline-completed-tasks" type="b">
+            <default>true</default>
+            <summary>Underline completed tasks</summary>
+            <description>Add an underline decoration to completed tasks to make them visually distinct from pending tasks</description>
+        </key>
+
+        <key name="local-inbox-project-id" type="s">
+            <default>""</default>
+            <summary>Inbox Project ID</summary>
+            <description>Stores the unique identifier of the local inbox project used for collecting unorganized tasks</description>
+        </key>
+
+        <key name="run-on-startup" type="b">
+            <default>false</default>
+            <summary>Run Planote on startup</summary>
+            <description>Automatically launch Planote when the system starts up to ensure tasks and reminders are always available</description>
+        </key>
+
+        <key name="run-in-background" type="b">
+            <default>false</default>
+            <summary>Run in background</summary>
+            <description>Allow Planote to continue running in the background when the window is closed, enabling notifications and reminders</description>
+        </key>
+
+        <key name="home-view" type="s">
+            <default>'inbox'</default>
+            <summary>Home Page</summary>
+            <description>Determines which view (inbox, today, scheduled, etc.) is displayed when the application starts</description>
+        </key>
+
+        <key name="show-today-completed" type="b">
+            <default>false</default>
+            <summary>Show completed tasks in Today view</summary>
+            <description>Display completed tasks in the Today view alongside pending ones</description>
+        </key>
+
+        <key name="slim-mode" type="b">
+            <default>true</default>
+            <summary>Slim Mode</summary>
+            <description>Enable a more compact interface layout with reduced spacing and smaller elements to fit more content on screen</description>
+        </key>
+
+        <key name="description-preview" type="b">
+            <default>true</default>
+            <summary>Show task description preview</summary>
+            <description>Display a preview of task descriptions in the task list</description>
+        </key>
+        
+        <key name="dismissed-update-version" type="s">
+            <default>''</default>
+            <summary>Dismissed update notification version</summary>
+            <description>Stores the version number of the update notification that was dismissed by the user to prevent showing it again</description>
+        </key>
+
+        <key name="calendar-enabled" type="b">
+            <default>true</default>
+            <summary>Calendar enabled</summary>
+            <description>Enable calendar integration to display tasks with due dates in calendar views and sync with system calendar</description>
+        </key>
+
+        <key name="views-order-visible" type="as">
+            <default>['inbox', 'today', 'scheduled', 'labels', 'completed']</default>
+            <summary>Visible views and their order</summary>
+            <description>Controls which views are visible in the sidebar and their display order</description>
+        </key>
+
+        <key name="show-tasks-count" type="b">
+            <default>true</default>
+            <summary>Show Tasks Count</summary>
+            <description>Display the number of pending tasks next to each project and view in the sidebar for quick overview</description>
+        </key>
+
+        <key name="show-support-banner" type="b">
+            <default>true</default>
+            <summary>Show support banner</summary>
+            <description>Display the support banner encouraging donations or contributions</description>
+        </key>
+
+        <key name="always-show-completed-subtasks" type="b">
+            <default>false</default>
+            <summary>Always Show Completed Sub-Tasks</summary>
+            <description>Keep completed subtasks visible in the task list instead of hiding them, providing a complete view of task progress</description>
+        </key>
+
+        <key name="task-complete-tone" type="b">
+            <default>true</default>
+            <summary>Play a sound when tasks are completed</summary>
+            <description>Play an audio notification sound when marking tasks as completed to provide satisfying feedback</description>
+        </key>
+
+        <key name="open-task-sidebar" type="b">
+            <default>false</default>
+            <summary>Open Task In Sidebar View</summary>
+            <description>Open task details in a sidebar panel instead of a separate dialog for easier multitasking and navigation</description>
+        </key>
+
+        <key name="mobile-mode" type="b">
+            <default>false</default>
+            <summary>Mobile Mode</summary>
+            <description>Optimize the interface for touch devices with larger buttons, simplified navigation, and mobile-friendly layouts</description>
+        </key>
+
+        <key name="attention-at-one" type="b">
+            <default>true</default>
+            <summary>Request attention when one task remains</summary>
+            <description>Show notification or highlight when only one task remains in a project</description>
+        </key>
+
+        <key name="enable-markdown-formatting" type="b">
+            <default>true</default>
+            <summary>Enable Markdown Formatting</summary>
+            <description>Allow markdown syntax in task descriptions and notes for rich text formatting like bold, italic, and links</description>
+        </key>
+
+        <key name="always-show-details-sidebar" type="b">
+            <default>false</default>
+            <summary>Always Show Details Sidebar</summary>
+            <description>Keep the details panel always visible for easier navigation between tasks, avoiding the need to constantly open and close the panel.</description>
+        </key>
+
+        <key name="automatic-reminders-enabled" type="b">
+            <default>true</default>
+            <summary>Automatic Reminders Enabled</summary>
+            <description>Enable automatic reminder notifications for tasks with due dates to help stay on track with deadlines</description>
+        </key>
+
+        <key name="automatic-reminders" enum="io.github.dev_aatif.planote.automatic-reminders">
+            <default>"At due time"</default>
+            <summary>Automatic Reminders</summary>
+            <description>Configure when automatic reminders are triggered - at due time, before due time, or custom intervals</description>
+        </key>
+
+        <key name="font-scale" type="d">
+            <default>1</default>
+            <summary>Font scale</summary>
+            <description> Adjusts the scaling factor for the application’s font size.  A value of 1 means the default font size, values greater than 1 increase the size, and values less than 1 make the text smaller.</description>
+        </key>
+
+        <key name="filters-list-view" type="b">
+            <default>false</default>
+            <summary>List View for Filters</summary>
+            <description>Show filters in a simple list instead of a grid.</description>
+        </key>
+
+        <key name="spell-checking-enabled" type="b">
+            <default>true</default>
+            <summary>Enable Spell Checking</summary>
+            <description>Enable spell checking in task descriptions and notes to help catch spelling errors</description>
+        </key>
+
+        <key name="smart-date-recognition" type="b">
+            <default>true</default>
+            <summary>Smart Date Recognition</summary>
+            <description>Automatically detect and parse natural language dates like "tomorrow" or "next week" when creating tasks</description>
+        </key>
+
+        <key name="notes-default-notebook" type="s">
+            <default>''</default>
+            <summary>Default Notebook ID</summary>
+            <description>The notebook to use for quick-add notes</description>
+        </key>
+
+        <key name="notes-view-mode" type="s">
+            <default>'list'</default>
+            <summary>Notes View Mode</summary>
+            <description>Display notes as 'list' or 'grid'</description>
+        </key>
+
+        <key name="notes-editor-mode" type="s">
+            <default>'edit'</default>
+            <summary>Notes Editor Mode</summary>
+            <description>Editor mode: 'edit', 'preview', or 'split'</description>
+        </key>
+
+        <key name="notes-font-size" type="i">
+            <default>12</default>
+            <summary>Notes Editor Font Size</summary>
+            <description>Font size for note editor in points</description>
+        </key>
+
+        <key name="notes-autosave-interval" type="i">
+            <default>500</default>
+            <summary>Auto-save Interval</summary>
+            <description>Milliseconds between auto-saves (0 to disable)</description>
+        </key>
+
+        <key name="notes-show-word-count" type="b">
+            <default>true</default>
+            <summary>Show Word Count</summary>
+            <description>Display word and character count in editor</description>
+        </key>
+
+        <key name="notes-font-family" type="s">
+            <default>'Sans'</default>
+            <summary>Notes Font Family</summary>
+            <description>Font family for note editor text</description>
+        </key>
+
+        <key name="notes-status-bar-alignment" type="s">
+            <default>'center'</default>
+            <summary>Status Bar Alignment</summary>
+            <description>Alignment for autosave indicator and word counter: 'left', 'center', or 'right'</description>
+        </key>
+    </schema>
+</schemalist>

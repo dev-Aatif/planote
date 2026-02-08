@@ -1,0 +1,18 @@
+.calendar-day {
+    padding: 3px 6px;
+    border-radius: 9px;
+}
+
+.calendar-day.selected {
+    background-color: @accent_color;
+    color: #ffffff;
+}
+
+.calendar-day.today {
+    color: #33d17a;
+    font-weight: bold;
+}
+
+.calendar-day.today.selected {
+    color: #ffffff;
+}

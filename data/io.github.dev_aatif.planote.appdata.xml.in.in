@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8'?>
+<component type="desktop">
+  <id>@appid@</id>
+  <metadata_license>CC0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <name translate="no">Planote</name>
+  <summary>Your thoughts, beautifully organized</summary>
+  <branding>
+    <color type="primary" scheme_preference="light">#B794D4</color>
+    <color type="primary" scheme_preference="dark">#6B4C8F</color>
+  </branding>
+  <description>
+    <p>Planote is your beautiful and powerful note-taking companion. Built on top of Planify, it combines powerful task management with elegant note-taking features to help you capture, organize, and never lose your thoughts.</p>
+    <p>✨ Core Features:</p>
+    <ul>
+      <li>Modern and clean interface designed with GTK4 and libadwaita</li>
+      <li>Drag and drop to organize notes, tasks, and projects effortlessly</li>
+      <li>Visual progress indicators for each project</li>
+      <li>Smart organization with sections and custom labels</li>
+      <li>Markdown support for rich text formatting</li>
+      <li>Calendar integration to visualize your schedule</li>
+      <li>Multiple reminders per task to never miss a deadline</li>
+      <li>Dark mode with seamless system theme integration</li>
+      <li>Quick and powerful search to find anything instantly</li>
+    </ul>
+    <p>☁️ Cloud Synchronization:</p>
+    <ul>
+      <li>Full synchronization with Todoist to access your tasks from anywhere</li>
+      <li>Support for Nextcloud and CalDAV servers to keep your data private</li>
+      <li>Offline mode: work without internet and sync when you're back online</li>
+    </ul>
+    <p>Based on Planify by Alain M. (alainm23)</p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/dev-Aatif/planote/main/data/resources/screenshot/screenshot-01.png</image>
+    </screenshot>
+  </screenshots>
+  <kudos>
+    <kudo>ModernToolkit</kudo>
+    <kudo>HiDpiIcon</kudo>
+  </kudos>
+  <developer_name translate="no">Aatif</developer_name>
+  <url type="homepage">https://github.com/dev-Aatif/planote</url>
+  <url type="bugtracker">https://github.com/dev-Aatif/planote/issues</url>
+  <url type="vcs-browser">https://github.com/dev-Aatif/planote</url>
+  <launchable type="desktop-id">@appid@.desktop</launchable>
+  <releases>
+    <release version="1.0.0" date="2026-01-27">
+      <description translate="no">
+        <p>🎉 Initial release of Planote - a fork of Planify focused on note-taking.</p>
+        <ul>
+          <li>Rebranded from Planify to Planote</li>
+          <li>New icon design with purple gradient theme</li>
+          <li>All existing Planify features included</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-info">mild</content_attribute>
+  </content_rating>
+  <custom>
+    <value key="x-appcenter-color-primary">#B794D4</value>
+    <value key="x-appcenter-color-primary-text">#ffffff</value>
+    <value key="x-appcenter-suggested-price">0</value>
+  </custom>
+</component>

@@ -1,0 +1,1756 @@
+/*
+* Copyright © 2023 Alain M. (https://github.com/alainm23/planify)
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public
+* License as published by the Free Software Foundation; either
+* version 3 of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* General Public License for more details.
+*
+* You should have received a copy of the GNU General Public
+* License along with this program; if not, write to the
+* Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+* Boston, MA 02110-1301 USA
+*
+* Authored by: Alain M. <alainmh23@gmail.com>
+*/
+
+public class Util : GLib.Object {
+    private static Util? _instance;
+    public static Util get_default () {
+        if (_instance == null) {
+            _instance = new Util ();
+        }
+
+        return _instance;
+    }
+
+    /*
+    *  Colors Utils
+    */
+
+    private Gee.HashMap<string, Objects.Color>? colors;
+    public Gee.HashMap<string, Objects.Color> get_colors () {
+        if (colors == null) {
+            colors = new Gee.HashMap<string, Objects.Color> ();
+
+            colors.set ("berry_red", new Objects.Color (30, _("Berry Red"), "#c42d78"));
+            colors.set ("red", new Objects.Color (31, _("Red"), "#e23d3d"));
+            colors.set ("orange", new Objects.Color (32, _("Orange"), "#ff8a2a"));
+            colors.set ("yellow", new Objects.Color (33, _("Yellow"), "#f5c400"));
+            colors.set ("olive_green", new Objects.Color (34, _("Olive Green"), "#9cab3a"));
+            colors.set ("lime_green", new Objects.Color (35, _("Lime Green"), "#70c741"));
+            colors.set ("green", new Objects.Color (36, _("Green"), "#27983a"));
+            colors.set ("mint_green", new Objects.Color (37, _("Mint Green"), "#55cbb0"));
+            colors.set ("teal", new Objects.Color (38, _("Teal"), "#1492b2"));
+            colors.set ("sky_blue", new Objects.Color (39, _("Sky Blue"), "#139ef7"));
+            colors.set ("light_blue", new Objects.Color (40, _("Light Blue"), "#7fb9e8"));
+            colors.set ("blue", new Objects.Color (41, _("Blue"), "#3c6dff"));
+            colors.set ("grape", new Objects.Color (42, _("Grape"), "#7b44e6"));
+            colors.set ("violet", new Objects.Color (43, _("Violet"), "#a02adb"));
+            colors.set ("lavender", new Objects.Color (44, _("Lavender"), "#d89ae8"));
+            colors.set ("magenta", new Objects.Color (45, _("Magenta"), "#d6458d"));
+            colors.set ("salmon", new Objects.Color (46, _("Salmon"), "#f77c70"));
+            colors.set ("charcoal", new Objects.Color (47, _("Charcoal"), "#666666"));
+            colors.set ("grey", new Objects.Color (48, _("Grey"), "#a0a0a0"));
+            colors.set ("taupe", new Objects.Color (49, _("Taupe"), "#b99780"));
+
+        }
+
+        return colors;
+    }
+
+    public string get_color_name (string key) {
+        return get_colors ().get (key).name;
+    }
+
+    public string get_color (string ? key) {
+        if (key == null || key == "") {
+            return "#1e63ec";
+        }
+        
+        if (get_colors ().has_key (key)) {
+            return get_colors ().get (key).hexadecimal;
+        }
+
+        var rgba = Gdk.RGBA ();
+        if (rgba.parse (key)) {
+            return key;
+        }
+
+        return "#1e63ec";
+    }
+
+    public string get_random_color () {
+        string returned = "berry_red";
+        int random = GLib.Random.int_range (30, 50);
+        foreach (var entry in get_colors ().entries) {
+            if (entry.value.id == random) {
+                returned = entry.key;
+            }
+        }
+
+        return returned;
+    }
+
+    // Providers
+    private Gee.HashMap<string, Gtk.CssProvider>? providers;
+    public void set_widget_color (string ? color, Gtk.Widget ? widget) {
+        if (color == null || color == "" || widget == null) {
+            return;
+        }
+
+        if (providers == null) {
+            providers = new Gee.HashMap<string, Gtk.CssProvider> ();
+        }
+
+        string clean_color = color.replace ("#", "");
+        string class_name = "accent-" + clean_color;
+
+        if (!providers.has_key (color)) {
+            // Directly apply color styles to the widget, including background for color-radio
+            string style = """
+                .%s {
+                    color: %s;
+                }
+                .%s.view-icon {
+                    color: %s;
+                    background-color: alpha(%s, 0.2);
+                }
+                .%s.color-radio {
+                    background: %s;
+                    border-color: alpha(%s, 0.3);
+                    box-shadow: inset 0 1px 0 0 alpha(white, 0.15),
+                        0 1px 2px alpha(black, 0.2);
+                }
+            """.printf (class_name, color, class_name, color, color, class_name, color, color);
+
+            var style_provider = new Gtk.CssProvider ();
+            style_provider.load_from_string (style);
+
+            Gtk.StyleContext.add_provider_for_display (
+                Gdk.Display.get_default (),
+                style_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            );
+
+            providers[color] = style_provider;
+        }
+
+        foreach (var cls in widget.get_css_classes ()) {
+            if (cls.has_prefix ("accent-")) {
+                widget.remove_css_class (cls);
+            }
+        }
+
+        widget.add_css_class (class_name);
+    }
+
+    public void set_widget_priority (int priority, Gtk.Widget widget) {
+        widget.remove_css_class ("priority-1-color");
+        widget.remove_css_class ("priority-2-color");
+        widget.remove_css_class ("priority-3-color");
+        widget.remove_css_class ("priority-4-color");
+
+        if (priority == Constants.PRIORITY_1) {
+            widget.add_css_class ("priority-1-color");
+        } else if (priority == Constants.PRIORITY_2) {
+            widget.add_css_class ("priority-2-color");
+        } else if (priority == Constants.PRIORITY_3) {
+            widget.add_css_class ("priority-3-color");
+        } else if (priority == Constants.PRIORITY_4) {
+            widget.add_css_class ("priority-4-color");
+        }
+    }
+
+    public void download_profile_image (string id, string avatar_url) {
+        if (id == null) {
+            return;
+        }
+        
+        var file_path = File.new_for_path (get_avatar_path (id));
+        var file_from_uri = File.new_for_uri (avatar_url);
+
+        if (!file_path.query_exists ()) {
+            MainLoop loop = new MainLoop ();
+
+            file_from_uri.copy_async.begin (file_path, 0, Priority.DEFAULT, null, (current_num_bytes, total_num_bytes) => {}, (obj, res) => {
+                try {
+                    if (file_from_uri.copy_async.end (res)) {
+                        // Services.EventBus.get_default ().avatar_downloaded ();
+                    }
+                } catch (Error e) {
+                    debug ("Error: %s\n", e.message);
+                }
+
+                loop.quit ();
+            });
+
+            loop.run ();
+        }
+    }
+
+    public string get_avatar_path (string id) {
+        return GLib.Path.build_filename (
+            Environment.get_user_data_dir () + "/io.github.dev_aatif.planote", id + ".jpg"
+        );
+    }
+
+    public string generate_id (Objects.BaseObject? base_object = null) {
+        if (base_object == null) {
+            return Uuid.string_random ();
+        }
+
+        var collection = Services.Store.instance ().get_collection_by_type (base_object);
+        var id = Uuid.string_random ();
+
+        if (check_id_exists (collection, id)) {
+            return generate_id (base_object);
+        }
+
+        return id;
+    }
+
+    private bool check_id_exists (Gee.ArrayList<Objects.BaseObject> items, string id) {
+        bool returned = false;
+        foreach (Objects.BaseObject base_object in items) {
+            if (base_object.id == id) {
+                returned = true;
+                break;
+            }
+        }
+
+        return returned;
+    }
+
+    public string generate_string () {
+        return generate_id ();
+    }
+
+    public string get_encode_text (string text) {
+        return text.replace ("&", "%26").replace ("#", "%23");
+    }
+
+    public string get_theme_name () {
+        string returned = "";
+        int appearance_mode = Services.Settings.get_default ().settings.get_enum ("appearance");
+        
+        switch (appearance_mode) {
+            case 0:
+                returned = _("Light");
+                break;
+            case 1:
+                returned = _("Dark");
+                break;
+            case 2:
+                returned = _("Dark Blue");
+                break;
+        }
+
+        return returned;
+    }
+
+    public static string get_user_language () {
+        string[] languages = Intl.get_language_names ();
+        
+        if (languages.length > 0) {
+            string lang = languages[0];
+            
+            if ("_" in lang) {
+                lang = lang.split ("_")[0];
+            } else if ("." in lang) {
+                lang = lang.split (".")[0];
+            }
+            
+            return lang.down ();
+        }
+        
+        return "en";
+    }
+
+    public string get_badge_name () {
+        string returned = "";
+        int badge_count = Services.Settings.get_default ().settings.get_enum ("badge-count");
+        
+        switch (badge_count) {
+            case 0:
+                returned = _("None");
+                break;
+            case 1:
+                returned = _("Inbox");
+                break;
+            case 2:
+                returned = _("Today");
+                break;
+            case 3:
+                returned = _("Today + Inbox");
+                break;
+        }
+
+        return returned;
+    }
+
+    public void update_theme () {
+        Appearance appearance_mode = Appearance.parse (Services.Settings.get_default ().settings.get_enum ("appearance"));
+        bool dark_mode = Services.Settings.get_default ().settings.get_boolean ("dark-mode");
+        bool system_appearance = Services.Settings.get_default ().settings.get_boolean ("system-appearance");
+        var color_scheme_settings = ColorSchemeSettings.Settings.get_default ();
+
+        if (system_appearance) {
+            dark_mode = color_scheme_settings.prefers_color_scheme == ColorSchemeSettings.Settings.ColorScheme.DARK;
+        }
+
+        string window_bg_color = "";
+        string popover_bg_color = "";
+        string sidebar_bg_color = "";
+        string item_border_color = "";
+        string upcoming_bg_color = "";
+        string upcoming_fg_color = ""; 
+        string selected_color = "";
+        string card_bg_color = "";
+
+        if (dark_mode) {
+            if (appearance_mode == Appearance.DARK) {
+                window_bg_color = "#181818";
+                popover_bg_color = "#202020";
+                sidebar_bg_color = "#1f1f1f";
+                item_border_color = "#3a3a3a";
+                upcoming_bg_color = "#2d2d2d";
+                upcoming_fg_color = "#f0f0f0";
+                selected_color = "#2e3a46";
+                card_bg_color = "#222222";
+                Adw.StyleManager.get_default ().color_scheme = Adw.ColorScheme.FORCE_DARK;
+            } else if (appearance_mode == Appearance.DARK_BLUE) {
+                window_bg_color = "#0C0D12";
+                popover_bg_color = "#16171D";
+                sidebar_bg_color = "#14151a";
+                item_border_color = "#2d2f35";
+                upcoming_bg_color = "#2a2d34";
+                upcoming_fg_color = "#e6e9ef";
+                selected_color = "#2a303a";
+                card_bg_color = "#1E2026";
+                Adw.StyleManager.get_default ().color_scheme = Adw.ColorScheme.FORCE_DARK;
+            }
+        } else {
+            window_bg_color = "#f9f9f9";
+            popover_bg_color = "#ffffff";
+            sidebar_bg_color = "#f3f4f6";
+            item_border_color = "#dcdfe3";
+            upcoming_bg_color = "#f0f1f3";
+            upcoming_fg_color = "#2d2e32";
+            selected_color = "#dbeafe";
+            card_bg_color = "#ffffff";
+            Adw.StyleManager.get_default ().color_scheme = Adw.ColorScheme.FORCE_LIGHT;
+        }
+
+        string css = """
+            @define-color window_bg_color %s;
+            @define-color popover_bg_color %s;
+            @define-color sidebar_bg_color %s;
+            @define-color item_border_color %s;
+            @define-color upcoming_bg_color %s;
+            @define-color upcoming_fg_color %s;
+            @define-color selected_color %s;
+            @define-color card_bg_color %s;
+        """.printf (
+            window_bg_color,
+            popover_bg_color,
+            sidebar_bg_color,
+            item_border_color,
+            upcoming_bg_color,
+            upcoming_fg_color,
+            selected_color,
+            card_bg_color
+        );
+
+        var provider = new Gtk.CssProvider ();
+        provider.load_from_string (css);
+        
+        Gtk.StyleContext.add_provider_for_display (
+            Gdk.Display.get_default (), provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        );
+
+        Services.EventBus.get_default ().theme_changed ();
+    }
+
+    public void update_font_scale () {
+        string _css = """
+            popover,
+            window {
+                font-size: %s%;
+            }
+        """;
+
+        var provider = new Gtk.CssProvider ();
+
+        string scale = (100 * Services.Settings.get_default ().get_double ("font-scale")).to_string ();
+        var css = _css.printf (scale);
+
+        provider.load_from_string (css);
+        Gtk.StyleContext.add_provider_for_display (
+            Gdk.Display.get_default (), provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        );
+    }
+
+    /**
+    * Replaces all line breaks with a space and
+    * replaces multiple spaces with a single one.
+    */
+    
+    private GLib.Regex line_break_to_space_regex = null;
+    public string line_break_to_space (string str) {
+        if (line_break_to_space_regex == null) {
+            try {
+                line_break_to_space_regex = new GLib.Regex ("(^\\s+|\\s+$|\n|\\s\\s+)");
+            } catch (GLib.RegexError e) {
+                critical (e.message);
+            }
+        }
+
+        try {
+            return line_break_to_space_regex.replace (str, str.length, 0, " ");
+        } catch (GLib.RegexError e) {
+            warning (e.message);
+        }
+
+        return str;
+    }
+
+    private Gtk.MediaFile soud_medida = null;
+    public void play_audio () {
+        if (soud_medida == null) {
+            soud_medida = Gtk.MediaFile.for_resource ("/io/github/dev_aatif/planote/success.ogg");
+        }
+        
+        soud_medida.play ();
+    }    
+
+    public bool is_input_valid (Gtk.Entry entry) {
+        return entry.get_text_length () > 0;
+    }
+
+    public bool is_text_valid (string text) {
+        return text.length > 0;
+    }
+
+    public string get_short_name (string name, int size = Constants.SHORT_NAME_SIZE) {
+        string returned = name;
+        
+        int char_count = name.char_count ();
+        if (char_count > size) {
+            returned = name.substring (0, name.index_of_nth_char (size)) + "…";
+        }
+
+        return returned;
+    }
+
+    public void clear_database (string title, string message, Gtk.Window window) {
+        var dialog = new Adw.AlertDialog (title, message);
+
+        dialog.body_use_markup = true;
+        dialog.add_response ("cancel", _("Cancel"));
+        dialog.add_response ("delete", _("Delete All"));
+        dialog.set_response_appearance ("delete", Adw.ResponseAppearance.DESTRUCTIVE);
+        dialog.present (window);
+
+        dialog.response.connect ((response) => {
+            if (response == "delete") {
+                Services.Database.get_default ().clear_database ();
+                Services.Settings.get_default ().reset_settings ();
+                show_alert_destroy (window);
+            }
+        });
+    }
+
+    public void show_alert_destroy (Gtk.Window window) {
+        var dialog = new Adw.AlertDialog (null, _("Process completed, you need to start Planote again."));
+
+        dialog.add_response ("ok", _("Ok"));
+        dialog.present (window);
+
+        dialog.response.connect ((response) => {
+            window.destroy ();
+        });
+    }
+
+
+
+    public int get_default_priority () {
+        int default_priority = Services.Settings.get_default ().settings.get_enum ("default-priority");
+        int returned = 1;
+
+        if (default_priority == 0) {
+            returned = 4;
+        } else if (default_priority == 1) {
+            returned = 3;
+        } else if (default_priority == 2) {
+            returned = 2;
+        } else if (default_priority == 3) {
+            returned = 1;
+        }
+
+        return returned;
+    }
+
+    public int to_caldav_priority (int priority) {
+        int returned = 1;
+
+        if (priority == 4) {
+            returned = 1;
+        } else if (priority == 3) {
+            returned = 5;
+        } else if (priority == 2) {
+            returned = 9;
+        } else {
+            returned = 0;
+        }
+
+        return returned;
+    }
+
+    /*
+    *   Theme Utils
+    */
+
+    public bool is_dark_theme () {
+        return Services.Settings.get_default ().settings.get_boolean ("dark-mode");
+    }
+
+    public bool is_flatpak () {
+        var is_flatpak = Environment.get_variable ("FLATPAK_ID");
+        if (is_flatpak != null) {
+            return true;
+        }
+    
+        return false;
+    }
+    
+    public List<Gtk.ListBoxRow> get_children (Gtk.ListBox list) {
+        List<Gtk.ListBoxRow> response = new List<Gtk.ListBoxRow> ();
+
+        Gtk.ListBoxRow item_row = null;
+        var row_index = 0;
+
+        do {
+            item_row = list.get_row_at_index (row_index);
+
+            if (item_row != null) {
+                response.append (item_row);
+            }
+
+            row_index++;
+        } while (item_row != null);
+
+        return response;
+    }
+
+    public List<Gtk.FlowBoxChild> get_flowbox_children (Gtk.FlowBox list) {
+        List<Gtk.FlowBoxChild> response = new List<Gtk.FlowBoxChild> ();
+
+        Gtk.FlowBoxChild item_row = null;
+        var row_index = 0;
+
+        do {
+            item_row = list.get_child_at_index (row_index);
+
+            if (item_row != null) {
+                response.append (item_row);
+            }
+
+            row_index++;
+        } while (item_row != null);
+
+        return response;
+    }
+
+    public Adw.Toast create_toast (string title, uint timeout = 2, Adw.ToastPriority priority = Adw.ToastPriority.NORMAL) {
+        var toast = new Adw.Toast (title);
+        toast.timeout = timeout;
+        toast.priority = priority;
+
+        return toast;
+    }
+
+    public Objects.Source create_local_source () {
+        Objects.Source local_source = new Objects.Source ();
+        local_source.id = SourceType.LOCAL.to_string ();
+        local_source.source_type = SourceType.LOCAL;
+        local_source.display_name = _("On This Computer");
+        local_source.data = new Objects.SourceData ();
+        Services.Store.instance ().insert_source (local_source);
+        return local_source;
+    }
+
+    public Objects.Project create_inbox_project () {
+        Objects.Project inbox_project = new Objects.Project ();
+        inbox_project.source_id = SourceType.LOCAL.to_string ();
+        inbox_project.id = Util.get_default ().generate_id (inbox_project);
+        inbox_project.name = _("Inbox");
+        inbox_project.inbox_project = true;
+        inbox_project.color = "blue";
+
+        Services.Store.instance ().insert_project (inbox_project);
+        Services.Settings.get_default ().settings.set_string ("local-inbox-project-id", inbox_project.id);
+
+        return inbox_project;
+    }
+
+    public void create_tutorial_project () {
+        Objects.Project project = new Objects.Project ();
+        project.id = Util.get_default ().generate_id (project);
+        project.source_id = SourceType.LOCAL.to_string ();
+        project.icon_style = ProjectIconStyle.EMOJI;
+        project.emoji = "🚀️";
+        project.name = _("Meet Tasks");
+        project.color = "blue";
+        project.show_completed = true;
+        project.description = _("This project shows you everything you need to know to hit the ground running. Don’t hesitate to play around with it – you can always recreate it from Preferences.");
+
+        Services.Store.instance ().insert_project (project);
+
+        var item_01 = new Objects.Item ();
+        item_01.id = Util.get_default ().generate_id (item_01);
+        item_01.project_id = project.id;
+        item_01.content = _("Tap this task");
+        item_01.description = _("You're looking at a to-do! Complete it by tapping the checkbox on the left. ");
+
+        var item_02 = new Objects.Item ();
+        item_02.id = Util.get_default ().generate_id (item_02);
+        item_02.project_id = project.id;
+        item_02.content = _("Create a new task");
+        item_02.description = _("Now it's your turn! Tap the '+' button at the bottom of your project, enter a task description, and tap the 'Add Task' button.");
+
+        var item_03 = new Objects.Item ();
+        item_03.id = Util.get_default ().generate_id (item_03);
+        item_03.project_id = project.id;
+        item_03.content = _("Plan this to-do for today or later");
+        item_03.description = _("Tap the calendar button at the bottom to decide when to complete this to-do.");
+
+        var item_04 = new Objects.Item ();
+        item_04.id = Util.get_default ().generate_id (item_04);
+        item_04.project_id = project.id;
+        item_04.content = _("Reorder your to-dos");
+        item_04.description = _("To reorder your list, tap and hold a to-do, then drag it to where it should go.");
+
+        var item_05 = new Objects.Item ();
+        item_05.id = Util.get_default ().generate_id (item_05);
+        item_05.project_id = project.id;
+        item_05.content = _("Create a project");
+        item_05.description = _("Organize your to-dos better! Go to the left panel and click the '+' button in the 'On This Computer' section and add a project of your own.");
+
+        var item_06 = new Objects.Item ();
+        item_06.id = Util.get_default ().generate_id (item_06);
+        item_06.project_id = project.id;
+        item_06.content = _("You’re done!");
+        item_06.description = _("""That’s all you really need to know. Feel free to start adding your own projects and to-dos.
+You can come back to this project later to learn the advanced features below.
+We hope you’ll enjoy using Planote!""");
+
+        project.add_item_if_not_exists (item_01);
+        project.add_item_if_not_exists (item_02);
+        project.add_item_if_not_exists (item_03);
+        project.add_item_if_not_exists (item_04);
+        project.add_item_if_not_exists (item_05);
+        project.add_item_if_not_exists (item_06);
+
+        var section_01 = new Objects.Section ();
+        section_01.id = Util.get_default ().generate_id (section_01);
+        section_01.project_id = project.id;
+        section_01.name = _("Tune your setup");
+
+        project.add_section_if_not_exists (section_01);
+
+        var item_02_01 = new Objects.Item ();
+        item_02_01.id = Util.get_default ().generate_id (item_02_01);
+        item_02_01.project_id = project.id;
+        item_02_01.section_id = section_01.id;
+        item_02_01.content = _("Show your calendar events");
+        item_02_01.description = _("You can display your system's calendar events in Planote. Go to 'Preferences' 🡒 General 🡒 Calendar Events to turn it on.");
+
+        var item_02_02 = new Objects.Item ();
+        item_02_02.id = Util.get_default ().generate_id (item_02_02);
+        item_02_02.project_id = project.id;
+        item_02_02.section_id = section_01.id;
+        item_02_02.content = _("Enable synchronization with third-party services");
+        item_02_02.description = _("Planote not only creates tasks locally, but can also synchronize with your Todoist account. Go to 'Preferences' 🡒 'Accounts'.");
+
+        section_01.add_item_if_not_exists (item_02_01);
+        section_01.add_item_if_not_exists (item_02_02);
+
+        var section_02 = new Objects.Section ();
+        section_02.id = Util.get_default ().generate_id (section_01);
+        section_02.project_id = project.id;
+        section_02.name = _("Boost your productivity");
+
+        project.add_section_if_not_exists (section_02);
+
+        var item_03_01 = new Objects.Item ();
+        item_03_01.id = Util.get_default ().generate_id (item_03_01);
+        item_03_01.project_id = project.id;
+        item_03_01.section_id = section_02.id;
+        item_03_01.content = _("Drag the plus button!");
+        item_03_01.description = _("That blue button you see at the bottom of each screen is more powerful than it looks: it's made to move! Drag it up to create a task wherever you want.");
+
+        var item_03_02 = new Objects.Item ();
+        item_03_02.id = Util.get_default ().generate_id (item_03_02);
+        item_03_02.project_id = project.id;
+        item_03_02.section_id = section_02.id;
+        item_03_02.content = _("Add labels to your tasks!");
+        item_03_02.description = _("Labels help you organize and categorize your tasks. To add a label, click the label button at the bottom.");
+
+        var item_03_03 = new Objects.Item ();
+        item_03_03.id = Util.get_default ().generate_id (item_03_03);
+        item_03_03.project_id = project.id;
+        item_03_03.section_id = section_02.id;
+        item_03_03.content = _("Set timely reminders!");
+        item_03_03.description = _("Get notified about important tasks or events. Tap the bell button below to add a reminder.");
+        
+        section_02.add_item_if_not_exists (item_03_01);
+        section_02.add_item_if_not_exists (item_03_02);
+        section_02.add_item_if_not_exists (item_03_03);
+    }
+
+    public void create_tutorial_notebook () {
+        // Check if notebooks already exist in database to prevent duplicates
+        var existing_notebooks = Services.Database.get_default ().get_notebooks_collection ();
+        if (existing_notebooks.size > 0) {
+            return;
+        }
+        
+        // Create the tutorial notebook
+        var notebook = new Objects.Notebook ();
+        notebook.id = Util.get_default ().generate_id ();
+        notebook.name = _("Getting Started with Notes");
+        notebook.icon = "📝";
+        notebook.color = "teal";
+        notebook.is_default = false;  // Tutorial notebook should not be the default for new notes
+        notebook.description = _("Your complete guide to mastering Notes in Planote. Explore these examples, then make it your own!");
+        
+        Services.Store.instance ().insert_notebook (notebook);
+        
+        // Note 1: Welcome & Overview
+        var note_01 = new Objects.Note ();
+        note_01.id = Util.get_default ().generate_id ();
+        note_01.notebook_id = notebook.id;
+        note_01.title = _("Welcome to Planote Notes! 🚀");
+        note_01.content = _("""# Welcome to Planote Notes! 🚀
+
+> *"The palest ink is better than the best memory."* — Chinese Proverb
+
+---
+
+## 📖 What are Notes?
+
+Notes in Planote are your **personal knowledge space** — a place to capture thoughts, ideas, and information that doesn't fit into a task list. Unlike tasks that you complete and check off, notes are meant to be **referenced, edited, and evolved** over time.
+
+---
+
+## ✨ What can you do with Notes?
+
+| Use Case | Example |
+|----------|---------|
+| 💡 **Brainstorming** | Capture ideas before they slip away |
+| 📋 **Meeting Notes** | Track discussions, decisions & action items |
+| 📚 **Reference Docs** | Store important info you access often |
+| ✍️ **Drafting** | Write in a distraction-free environment |
+| 🎯 **Goal Setting** | Document your objectives & progress |
+| 📓 **Journaling** | Daily reflections & personal thoughts |
+
+---
+
+## 🎨 Key Features
+
+- **✅ Auto-Save** — Your changes are saved instantly, no manual saving needed
+- **✅ Rich Markdown** — Format text beautifully with simple syntax
+- **✅ Notebooks** — Organize notes into themed collections
+- **✅ Quick Search** — Find any note by title or content in seconds
+- **✅ Distraction-Free** — Clean interface focused on your writing
+
+---
+
+## 🏁 Getting Started
+
+1. **Create a new note** by clicking the `+` button
+2. **Give it a descriptive title** so you can find it later
+3. **Start writing** — your changes save automatically
+4. **Use Markdown** to add formatting (see the next note!)
+5. **Organize** notes into notebooks for easy navigation
+
+---
+
+*This tutorial notebook contains everything you need to master Notes. Feel free to edit, delete, or use these notes as templates!*
+
+**Happy note-taking! 📝**""");
+        
+        Services.Store.instance ().insert_note (note_01);
+        
+        // Note 2: Comprehensive Markdown Guide
+        var note_02 = new Objects.Note ();
+        note_02.id = Util.get_default ().generate_id ();
+        note_02.notebook_id = notebook.id;
+        note_02.title = _("Markdown Formatting Guide 🎨");
+        note_02.content = _("""# Markdown Formatting Guide 🎨
+
+Markdown is a simple way to format your text. Here's everything you need to know!
+
+---
+
+## 📝 Text Formatting
+
+| Style | Syntax | Result |
+|-------|--------|--------|
+| Bold | `**text**` | **bold text** |
+| Italic | `*text*` | *italic text* |
+| Bold + Italic | `***text***` | ***bold and italic*** |
+| Strikethrough | `~~text~~` | ~~crossed out~~ |
+| Inline Code | `` `code` `` | `inline code` |
+
+---
+
+## 📋 Lists
+
+### Unordered Lists
+```
+- Item one
+- Item two
+  - Nested item
+  - Another nested
+- Item three
+```
+
+**Result:**
+- Item one
+- Item two
+  - Nested item
+  - Another nested
+- Item three
+
+### Ordered Lists
+```
+1. First step
+2. Second step
+3. Third step
+```
+
+**Result:**
+1. First step
+2. Second step
+3. Third step
+
+### Task Lists
+```
+- [x] Completed task
+- [ ] Pending task
+- [ ] Another pending
+```
+
+---
+
+## 🏷️ Headings
+
+```
+# Heading 1 (Largest)
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6 (Smallest)
+```
+
+---
+
+## 💬 Blockquotes
+
+```
+> This is a quote.
+> It can span multiple lines.
+>
+> — Author Name
+```
+
+**Result:**
+> This is a quote.
+> It can span multiple lines.
+>
+> — Author Name
+
+---
+
+## 🔗 Links & Images
+
+### Links
+```
+[Link Text](https://example.com)
+```
+Example: [Planote on GitHub](https://github.com/aatef-dev/planote)
+
+---
+
+## 📊 Code Blocks
+
+### Inline Code
+Use backticks: `` `variable_name` `` → `variable_name`
+
+### Code Blocks with Syntax Highlighting
+````
+```python
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("Planote"))
+```
+````
+
+**Result:**
+```python
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("Planote"))
+```
+
+---
+
+## ➖ Horizontal Rules
+
+Use three or more dashes, asterisks, or underscores:
+```
+---
+***
+___
+```
+
+---
+
+## 💡 Pro Tips
+
+1. **Preview as you type** — Changes render live
+2. **Keep it simple** — Don't over-format
+3. **Use headings** — They create structure
+4. **Blank lines matter** — Separate paragraphs with empty lines
+
+---
+
+*Now you're ready to create beautifully formatted notes! ✨*""");
+        
+        Services.Store.instance ().insert_note (note_02);
+        
+        // Note 3: Organization & Productivity Tips
+        var note_03 = new Objects.Note ();
+        note_03.id = Util.get_default ().generate_id ();
+        note_03.notebook_id = notebook.id;
+        note_03.title = _("Organization & Productivity Tips 📂");
+        note_03.content = _("""# Organization & Productivity Tips 📂
+
+Master the art of keeping your notes organized and accessible!
+
+---
+
+## 📓 Using Notebooks Effectively
+
+Think of notebooks as **folders** for your notes. Create them based on:
+
+| Notebook Type | Purpose | Examples |
+|---------------|---------|----------|
+| 📔 **Personal** | Private thoughts | Journal, Goals, Ideas |
+| 💼 **Work** | Professional content | Meeting notes, Projects |
+| 📚 **Learning** | Educational material | Courses, Research, Books |
+| 🎨 **Creative** | Artistic endeavors | Writing, Design, Music |
+| 🏠 **Home** | Household management | Recipes, Maintenance, Budget |
+
+---
+
+## 🏷️ Naming Conventions
+
+Good titles make notes **findable**. Use consistent patterns:
+
+### ✅ Good Titles
+- `Meeting Notes - Marketing Team - 2024-01-15`
+- `Book Review: Atomic Habits`
+- `Recipe: Mom's Chocolate Cake`
+- `Project Ideas - Q1 2024`
+
+### ❌ Avoid These
+- `Notes`
+- `Stuff`
+- `Untitled`
+- `asdfgh`
+
+---
+
+## 🔍 Search Like a Pro
+
+The search feature is powerful! Use it to find:
+
+- **By title** — The note's name
+- **By content** — Any text inside the note
+- **By keywords** — Key terms you remember
+
+**Tip:** Add relevant keywords at the bottom of important notes to make them easier to find later!
+
+---
+
+## 🗓️ Regular Maintenance
+
+Set aside **15 minutes weekly** to:
+
+1. ✅ Review recent notes
+2. ✅ Update outdated information
+3. ✅ Archive or delete what you no longer need
+4. ✅ Move notes to appropriate notebooks
+5. ✅ Add missing titles or formatting
+
+---
+
+## 📐 Templates for Common Notes
+
+### Meeting Notes Template
+```markdown
+# Meeting: [Topic]
+**Date:** YYYY-MM-DD
+**Attendees:** @person1, @person2
+
+## Agenda
+1. Topic one
+2. Topic two
+
+## Discussion
+- Key point discussed
+- Decision made
+
+## Action Items
+- [ ] Task 1 — @person1
+- [ ] Task 2 — @person2
+
+## Next Steps
+- Follow-up date: YYYY-MM-DD
+```
+
+### Daily Journal Template
+```markdown
+# Journal: YYYY-MM-DD
+
+## 🌅 Morning Intentions
+What do I want to accomplish today?
+
+## 📝 Notes & Observations
+Thoughts throughout the day...
+
+## 🌙 Evening Reflection
+What went well? What could improve?
+
+## 🙏 Gratitude
+Three things I'm grateful for today...
+```
+
+---
+
+*Stay organized, stay productive! 🚀*""");
+        
+        Services.Store.instance ().insert_note (note_03);
+        
+        // Note 4: Keyboard Shortcuts & Quick Tips
+        var note_04 = new Objects.Note ();
+        note_04.id = Util.get_default ().generate_id ();
+        note_04.notebook_id = notebook.id;
+        note_04.title = _("Keyboard Shortcuts & Quick Tips ⌨️");
+        note_04.content = _("""# Keyboard Shortcuts & Quick Tips ⌨️
+
+Speed up your workflow with these shortcuts and tips!
+
+---
+
+## ⌨️ Essential Shortcuts
+
+### Navigation
+| Action | Shortcut |
+|--------|----------|
+| New Note | `Ctrl + N` |
+| Search Notes | `Ctrl + F` |
+| Switch Notebook | `Ctrl + Tab` |
+| Go to Today | `Ctrl + T` |
+| Go to Inbox | `Ctrl + I` |
+
+### Editing
+| Action | Shortcut |
+|--------|----------|
+| Bold | `Ctrl + B` |
+| Italic | `Ctrl + I` |
+| Save (manual) | `Ctrl + S` |
+| Undo | `Ctrl + Z` |
+| Redo | `Ctrl + Shift + Z` |
+
+### General
+| Action | Shortcut |
+|--------|----------|
+| Preferences | `Ctrl + ,` |
+| Quick Add | `Ctrl + Shift + N` |
+| Sync Now | `Ctrl + R` |
+
+---
+
+## ⚡ Power User Tips
+
+### 1. Quick Capture
+When an idea strikes, quickly create a note and capture it — don't worry about formatting. You can refine it later!
+
+### 2. Link Notes to Tasks
+Reference note IDs in your task descriptions to keep context handy.
+
+### 3. Use Headers for Navigation
+Break long notes into sections with headers (`##`). This makes scrolling and finding info much easier.
+
+### 4. Archive Don't Delete
+Unsure about deleting a note? Move it to an "Archive" notebook instead. You might need it later!
+
+### 5. Export Important Notes
+For critical information, consider keeping a backup outside of Planote.
+
+---
+
+## 🎯 Feature Highlights
+
+### Auto-Save
+Your notes save **automatically** as you type. No need to manually save — ever! A small indicator shows when saving is in progress.
+
+### Rich Preview
+Markdown formatting renders in real-time, so you see exactly how your note will look.
+
+### Quick Access
+Recently edited notes appear at the top of your notebook for fast access.
+
+---
+
+## 🛠️ Customization
+
+Visit **Preferences** to personalize your experience:
+
+- 🌓 **Dark/Light Mode** — Easy on the eyes
+- 🔤 **Font Size** — Comfortable reading
+- 📁 **Default Notebook** — Where new notes go
+- 🔔 **Notifications** — Stay updated
+
+---
+
+## 🆘 Need Help?
+
+- **Reset Tutorial** — Recreate this notebook from Preferences
+- **Report Issues** — Visit our GitHub repository
+- **Community** — Join discussions and share tips
+
+---
+
+## 🎉 You're All Set!
+
+You now know everything to make the most of Planote Notes!
+
+**Remember:**
+- ✅ Capture ideas quickly
+- ✅ Organize with notebooks
+- ✅ Format with Markdown
+- ✅ Review regularly
+
+*Go ahead — delete these tutorial notes and start your own collection!*
+
+---
+
+**Happy note-taking with Planote! 📝✨**""");
+        
+        Services.Store.instance ().insert_note (note_04);
+        
+        // Note 5: Example - Meeting Notes Template
+        var note_05 = new Objects.Note ();
+        note_05.id = Util.get_default ().generate_id ();
+        note_05.notebook_id = notebook.id;
+        note_05.title = _("📋 Template: Meeting Notes");
+        note_05.content = _("""# Meeting Notes Template 📋
+
+> **Tip:** Copy this template to create your own meeting notes!
+
+---
+
+# Meeting: [Project Name / Topic]
+
+**📅 Date:** YYYY-MM-DD  
+**⏰ Time:** HH:MM - HH:MM  
+**📍 Location:** [Room / Video Call Link]  
+**👥 Attendees:** 
+- Name 1 (Role)
+- Name 2 (Role)
+- Name 3 (Role)
+
+---
+
+## 📋 Agenda
+
+1. [ ] Topic one
+2. [ ] Topic two
+3. [ ] Topic three
+4. [ ] Q&A / Open discussion
+
+---
+
+## 📝 Discussion Notes
+
+### Topic 1: [Name]
+- Key point discussed
+- Decisions made
+- Questions raised
+
+### Topic 2: [Name]
+- Key point discussed
+- Decisions made
+- Questions raised
+
+---
+
+## ✅ Action Items
+
+| Task | Assignee | Due Date | Status |
+|------|----------|----------|--------|
+| Action 1 | @name | YYYY-MM-DD | ⏳ Pending |
+| Action 2 | @name | YYYY-MM-DD | ⏳ Pending |
+| Action 3 | @name | YYYY-MM-DD | ⏳ Pending |
+
+---
+
+## 📌 Key Decisions
+
+1. Decision one with brief explanation
+2. Decision two with brief explanation
+
+---
+
+## 🔜 Next Steps
+
+- [ ] Schedule follow-up meeting for: [Date]
+- [ ] Share notes with team by: [Date]
+- [ ] Complete action items by: [Date]
+
+---
+
+## 📎 Attachments / References
+
+- [Link to document 1]()
+- [Link to document 2]()
+
+---
+
+*Meeting notes prepared by: [Your Name]*""");
+        
+        Services.Store.instance ().insert_note (note_05);
+    }
+
+    public void create_default_labels () {
+        var label_01 = new Objects.Label ();
+        label_01.id = Util.get_default ().generate_id (label_01);
+        label_01.source_id = SourceType.LOCAL.to_string ();
+        label_01.name = _("💼️Work");
+        label_01.color = "taupe";
+
+        var label_02 = new Objects.Label ();
+        label_02.id = Util.get_default ().generate_id (label_02);
+        label_02.source_id = SourceType.LOCAL.to_string ();
+        label_02.name = _("🎒️School");
+        label_02.color = "berry_red";
+
+        var label_03 = new Objects.Label ();
+        label_03.id = Util.get_default ().generate_id (label_03);
+        label_03.source_id = SourceType.LOCAL.to_string ();
+        label_03.name = _("👉️Delegated");
+        label_03.color = "yellow";
+
+        var label_04 = new Objects.Label ();
+        label_04.id = Util.get_default ().generate_id (label_04);
+        label_04.source_id = SourceType.LOCAL.to_string ();
+        label_04.name = _("🏡️Home");
+        label_04.color = "lime_green";
+
+        var label_05 = new Objects.Label ();
+        label_05.id = Util.get_default ().generate_id (label_05);
+        label_05.source_id = SourceType.LOCAL.to_string ();
+        label_05.name = _("🏃‍♀️️Follow Up");
+        label_05.color = "grey";
+
+        Services.Store.instance ().insert_label (label_01);
+        Services.Store.instance ().insert_label (label_02);
+        Services.Store.instance ().insert_label (label_03);
+        Services.Store.instance ().insert_label (label_04);
+        Services.Store.instance ().insert_label (label_05);
+    }
+
+    public string markup_accel_tooltip (string description, string accel) {
+        return "%s\n%s".printf (description, """<span weight="600" size="smaller" alpha="75%">%s</span>""".printf (accel));
+    }
+
+    public string markup_accels_tooltip (string description, string[] accels) {
+        string result = "%s\n".printf (description);
+
+        for (int index = 0; index < accels.length; index++) {
+            string accel = """<span weight="600" size="smaller" alpha="75%">%s</span>""".printf (accels[index]);
+
+            if (index < accels.length - 1) {
+                result += accel + ", ";
+            } else {
+                result += accel;
+            }
+        }
+
+        return result;
+    }
+
+    /*
+    *   XML adn CakDAV Util
+    */
+
+
+    public static string find_string_value (string key, string data) {
+        if (key == null || data == null) {
+            return "";
+        }
+        
+        GLib.Regex? regex = null;
+        GLib.MatchInfo match;
+
+        try {
+            regex = new GLib.Regex ("%s:(.*)".printf (key));
+        } catch (GLib.RegexError e) {
+            critical (e.message);
+        }
+
+        if (regex == null) {
+            return "";
+        }
+
+        if (!regex.match (data.strip (), 0, out match)) {
+            return "";
+        }
+
+        return match.fetch_all ()[1];
+    }
+
+    public static bool find_boolean_value (string key, string data) {
+        GLib.Regex? regex = null;
+        GLib.MatchInfo match;
+
+        try {
+            regex = new GLib.Regex ("%s:(.*)".printf (key));
+        } catch (GLib.RegexError e) {
+            critical (e.message);
+        }
+
+        if (regex == null) {
+            return false;
+        }
+
+        if (!regex.match (data, 0, out match)) {
+            return false;
+        }
+
+        return bool.parse (match.fetch_all () [1]);
+    }
+
+    public static string generate_extra_data (string ical_url, string etag, string data) {
+        var builder = new Json.Builder ();
+        builder.begin_object ();
+
+        builder.set_member_name ("ical_url");
+        builder.add_string_value (ical_url);
+
+        builder.set_member_name ("etag");
+        builder.add_string_value (etag);
+        
+        builder.set_member_name ("calendar-data");
+        builder.add_string_value (data);
+
+        builder.end_object ();
+
+        Json.Generator generator = new Json.Generator ();
+        Json.Node root = builder.get_root ();
+        generator.set_root (root);
+        return generator.to_data (null);
+    }
+
+    public async void move_backend_type_item (Objects.Item item, Objects.Project target_project, string parent_id = "", bool notify = true) {
+        var new_item = item.duplicate ();
+        new_item.project_id = target_project.id;
+        new_item.parent_id = parent_id;
+
+        item.loading = true;
+        item.sensitive = false;
+
+        if (target_project.source_type == SourceType.LOCAL) {
+            new_item.id = Util.get_default ().generate_id (new_item);
+            yield add_final_duplicate_item (new_item, item, notify);
+        } else if (target_project.source_type == SourceType.TODOIST) {
+            HttpResponse response = yield Services.Todoist.get_default ().add (new_item);
+            item.loading = false;
+
+            if (response.status) {
+                new_item.id = response.data;
+                yield add_final_duplicate_item (new_item, item, notify);
+            }
+        } else if (target_project.source_type == SourceType.CALDAV) {
+            new_item.id = Util.get_default ().generate_id (new_item);
+
+            var caldav_client = Services.CalDAV.Core.get_default ().get_client (new_item.project.source);
+            HttpResponse response = yield caldav_client.add_item (new_item);
+            item.loading = false;
+
+            if (response.status) {
+                yield add_final_duplicate_item (new_item, item, notify);
+            }
+        }
+    }
+
+    public async void add_final_duplicate_item (Objects.Item new_item, Objects.Item item, bool notify = true) {
+        if (new_item.has_parent) {
+            new_item.parent.add_item_if_not_exists (new_item);
+        } else {
+            new_item.project.add_item_if_not_exists (new_item);
+        }
+
+        foreach (Objects.Reminder reminder in item.reminders) {
+            var _reminder = reminder.duplicate ();
+            _reminder.id = Util.get_default ().generate_id (_reminder);
+            _reminder.item_id = new_item.id;
+            new_item.add_reminder_if_not_exists (_reminder);
+        }
+
+        foreach (Objects.Attachment attachment in item.attachments) {
+            var _attachment = attachment.duplicate ();
+            _attachment.id = Util.get_default ().generate_id ();
+            _attachment.item_id = new_item.id;
+            new_item.add_attachment_if_not_exists (_attachment);
+        }
+
+        foreach (Objects.Item subitem in item.items) {
+            yield move_backend_type_item (subitem, new_item.project, new_item.id, false);
+        }
+
+        if (notify) {
+            Services.EventBus.get_default ().send_toast (
+                create_toast (_("Task moved to %s".printf (new_item.project.name)))
+            );
+        }
+
+        item.delete_item ();
+    }
+
+    public async void duplicate_item (Objects.Item item, string project_id, string section_id = "", string parent_id = "", bool notify = true) {
+        var new_item = item.duplicate ();
+        new_item.project_id = project_id;
+        new_item.section_id = section_id;
+        new_item.parent_id = parent_id;
+
+        item.loading = true;
+        item.sensitive = false;
+
+        if (item.project.source_type == SourceType.LOCAL) {
+            new_item.id = Util.get_default ().generate_id (new_item);
+
+            item.loading = false;
+            item.sensitive = true;
+
+            yield insert_duplicate_item (new_item, item, notify);
+        } else if (item.project.source_type == SourceType.TODOIST) {
+            HttpResponse response = yield Services.Todoist.get_default ().add (new_item);
+            
+            item.loading = false;
+            item.sensitive = true;
+
+            if (response.status) {
+                new_item.id = response.data;
+                yield insert_duplicate_item (new_item, item, notify);
+            }
+        } else if (item.project.source_type == SourceType.CALDAV) {
+            new_item.id = Util.get_default ().generate_id (new_item);
+            var caldav_client = Services.CalDAV.Core.get_default ().get_client (new_item.project.source);
+            HttpResponse response = yield caldav_client.add_item (new_item);
+            
+            item.loading = false;
+            item.sensitive = true;
+
+            if (response.status) {
+                yield insert_duplicate_item (new_item, item, notify);
+            }
+        }
+    }
+
+    private async void insert_duplicate_item (Objects.Item new_item, Objects.Item item, bool notify = true) {
+        if (new_item.has_parent) {
+			new_item.parent.add_item_if_not_exists (new_item);
+		} else {
+            if (new_item.section_id != "") {
+                new_item.section.add_item_if_not_exists (new_item);
+            } else {
+                new_item.project.add_item_if_not_exists (new_item);
+            }
+        }
+
+        Services.EventBus.get_default ().update_section_sort_func (new_item.project_id, new_item.section_id, false);
+
+        foreach (Objects.Reminder reminder in item.reminders) {
+            var _reminder = reminder.duplicate ();
+            _reminder.id = Util.get_default ().generate_id (_reminder);
+            _reminder.item_id = new_item.id;
+            new_item.add_reminder_if_not_exists (_reminder);
+        }
+
+        foreach (Objects.Attachment attachment in item.attachments) {
+            var _attachment = attachment.duplicate ();
+            _attachment.id = Util.get_default ().generate_id ();
+            _attachment.item_id = new_item.id;
+            new_item.add_attachment_if_not_exists (_attachment);
+        }
+
+        foreach (Objects.Item subitem in item.items) {
+            yield duplicate_item (subitem, new_item.project_id, new_item.section_id, new_item.id, notify);
+        }
+
+        if (notify) {
+            Services.EventBus.get_default ().send_toast (
+                Util.get_default ().create_toast (_("Task duplicated"))
+            );
+        }
+    }
+
+    public async void duplicate_section (Objects.Section section, string project_id, bool notify = true) {
+        var new_section = section.duplicate ();
+        new_section.project_id = project_id;
+
+        section.loading = true;
+        section.sensitive = false;
+
+        if (new_section.project.source_type == SourceType.LOCAL) {
+            new_section.id = Util.get_default ().generate_id (new_section);
+            yield insert_duplicate_section (new_section, section, notify);
+        } else if (new_section.project.source_type == SourceType.TODOIST) {
+            HttpResponse response = yield Services.Todoist.get_default ().add (new_section);
+            if (response.status) {
+                new_section.id = response.data;
+                yield insert_duplicate_section (new_section, section, notify);
+            }
+        }
+    }
+
+    private async void insert_duplicate_section (Objects.Section new_section, Objects.Section section, bool notify = true) {
+        new_section.project.add_section_if_not_exists (new_section);
+
+        foreach (Objects.Item item in section.items) {
+            yield duplicate_item (item, new_section.project_id, new_section.id, item.parent_id, false);
+        }
+
+        section.loading = false;
+        section.sensitive = true;
+
+        if (notify) {
+            Services.EventBus.get_default ().send_toast (
+                Util.get_default ().create_toast (_("Section duplicated"))
+            );
+        }
+    }
+
+    public async void duplicate_project (Objects.Project project, string parent_id = "") {
+        var new_project = project.duplicate ();
+        new_project.parent_id = parent_id;
+
+        project.loading = true;
+
+        if (project.source_type == SourceType.LOCAL) {
+            new_project.id = Util.get_default ().generate_id (new_project);
+            Services.Store.instance ().insert_project (new_project);
+
+            foreach (Objects.Item item in project.items) {
+                yield duplicate_item (item, new_project.id, item.section_id, item.parent_id, false);
+            }
+
+            foreach (Objects.Section section in project.sections) {
+                yield duplicate_section (section, new_project.id, false);
+            }
+
+            project.loading = false;
+
+            Services.EventBus.get_default ().send_toast (
+                Util.get_default ().create_toast (_("Project duplicated"))
+            );
+        } else if (project.source_type == SourceType.TODOIST) {            
+            Services.Todoist.get_default ().duplicate_project.begin (project, (obj, res) => {
+                project.loading = false;
+                
+                if (Services.Todoist.get_default ().duplicate_project.end (res).status) {
+                    Services.Todoist.get_default ().sync.begin (project.source);
+                }
+            });
+        } else if (project.source_type == SourceType.CALDAV) {
+            new_project.id = Util.get_default ().generate_id (new_project);
+            
+            var caldav_client = Services.CalDAV.Core.get_default ().get_client (new_project.source);
+            HttpResponse response = yield caldav_client.create_project (new_project);
+
+            if (response.status) {
+                Services.Store.instance ().insert_project (new_project);
+            
+                foreach (Objects.Item item in project.items) {
+                    yield duplicate_item (item, new_project.id, "", item.parent_id, false);
+                }
+    
+                project.loading = false;
+    
+                Services.EventBus.get_default ().send_toast (
+                    Util.get_default ().create_toast (_("Project duplicated"))
+                );
+            }
+        }
+    }
+
+    public static int get_reminders_mm_offset () {
+        int value = Services.Settings.get_default ().settings.get_enum ("automatic-reminders");
+        int return_value = 0;
+
+        switch (value) {
+            case 0:
+                return_value = 0;
+                break;
+            case 1:
+                return_value = 10;
+                break;
+            case 2:
+                return_value = 30;
+                break;
+            case 3:
+                return_value = 45;
+                break;
+            case 4:
+                return_value = 60;
+                break;
+            case 5:
+                return_value = 120;
+                break;
+            case 6:
+                return_value = 180;
+                break;
+        }
+
+        return return_value;
+    }
+
+    public static string get_reminders_mm_offset_text (int value) {
+        string return_value = "";
+
+        switch (value) {
+            case 0:
+                return_value = _("At due time");
+                break;
+            case 10:
+                return_value = _("10 minutes before");
+                break;
+            case 30:
+                return_value = _("30 minutes before");
+                break;
+            case 45:
+                return_value = _("45 minutes before");
+                break;
+            case 60:
+                return_value = _("1 hour before");
+                break;
+            case 120:
+                return_value = _("2 hours before");
+                break;
+            case 180:
+                return_value = _("3 hours before");
+                break;
+        }
+
+        return return_value;
+    }
+
+    // https://wiki.gnome.org/Projects/Vala/AsyncSamples#Async_sleep_example
+    public static async void nap (uint interval, int priority = GLib.Priority.DEFAULT) {
+        GLib.Timeout.add (interval, () => {
+            nap.callback ();
+            return false;
+        }, priority);
+
+        yield;
+    }
+
+    public int natural_compare (string a, string b) {
+        Regex regex;
+
+        try {
+            regex = new Regex ("(\\d+)|(\\D+)");
+
+            MatchInfo ma = null;
+            MatchInfo mb = null;
+
+            if (!regex.match_full (a, a.length, 0, 0, out ma) || !regex.match_full (b, b.length, 0, 0, out mb)) {
+                return a.collate (b);
+            }
+
+            while (ma.matches () && mb.matches ()) {
+                string part_a = ma.fetch (0);
+                string part_b = mb.fetch (0);
+
+                if (Regex.match_simple ("^\\d+$", part_a, 0, 0) && Regex.match_simple ("^\\d+$", part_b, 0, 0)) {
+                    int na = int.parse (part_a);
+                    int nb = int.parse (part_b);
+                    if (na != nb)
+                        return na - nb;
+                } else {
+                    int result = part_a.collate (part_b);
+                    if (result != 0)
+                        return result;
+                }
+
+                if (!ma.next () || !mb.next ())
+                    break;
+            }
+
+            return a.collate (b);
+        } catch (RegexError e) {
+            return a.collate (b);
+        }
+    }
+
+    public int set_item_sort_func (Objects.Item item1, Objects.Item item2, SortedByType sorted_by, SortOrderType sort_order) {
+        int result = 0;
+        
+        if (sorted_by == SortedByType.MANUAL) {
+            result = item1.child_order - item2.child_order;
+        } else if (sorted_by == SortedByType.NAME) {
+            string content1 = item1.content ?? "";
+            string content2 = item2.content ?? "";
+            result = natural_compare (content1.strip (), content2.strip ());
+        } else if (sorted_by == SortedByType.DUE_DATE) {
+            if (item1.has_due && item2.has_due) {
+                var date1 = item1.due.datetime;
+                var date2 = item2.due.datetime;
+
+                result = date1.compare (date2);
+                if (result == 0) {
+                    result = item2.priority - item1.priority;
+                }
+            } else if (!item1.has_due && item2.has_due) {
+                result = 1;
+            } else if (item1.has_due && !item2.has_due) {
+                result = -1;
+            }
+        } else if (sorted_by == SortedByType.ADDED_DATE) {
+            result = item1.added_datetime.compare (item2.added_datetime);
+        } else if (sorted_by == SortedByType.PRIORITY) {
+            result = item2.priority - item1.priority;
+            if (result == 0) {
+                result = item1.added_datetime.compare (item2.added_datetime);
+            }
+        }
+
+        return sort_order == SortOrderType.ASC ? result : -result;
+    }
+}

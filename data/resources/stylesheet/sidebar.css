@@ -1,0 +1,161 @@
+/* ==========================================================================
+   FILTER PANE CHILD (FlowBox Grid View)
+   ========================================================================== */
+
+.filter-pane-child {
+    padding: 10px 12px;
+    border-radius: 12px;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: alpha(@colorAccent, 0.12);
+    color: @colorAccent;
+    border: 1px solid alpha(@colorAccent, 0.2);
+    box-shadow: 0 1px 3px alpha(black, 0.04);
+}
+
+.filter-pane-child.animation image {
+    animation: fancy-bounce-turn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.filter-pane-child:hover {
+    background-color: alpha(@colorAccent, 0.18);
+    border-color: alpha(@colorAccent, 0.35);
+    box-shadow: 0 4px 12px alpha(@colorAccent, 0.2),
+        0 2px 4px alpha(black, 0.08);
+    transform: translateY(-2px);
+}
+
+.filter-pane-child.selected {
+    background-color: alpha(@colorAccent, 0.22);
+    border-color: @colorAccent;
+    box-shadow: 0 0 0 2px alpha(@colorAccent, 0.25),
+        0 4px 12px alpha(@colorAccent, 0.15);
+}
+
+/* ==========================================================================
+   FILTER PANE ROW (ListView/ListBox View)
+   ========================================================================== */
+
+.filter-pane-row {
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+    margin: 2px 0;
+}
+
+.filter-pane-row.animation image {
+    animation: fancy-bounce-turn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.filter-pane-row:hover {
+    background-color: alpha(@selected_color, 0.25);
+}
+
+.filter-pane-row .view-icon {
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-pane-row:hover .view-icon {
+    -gtk-icon-transform: scale(1.15);
+}
+
+/* ==========================================================================
+   SIDEBAR ROW (General)
+   ========================================================================== */
+
+.sidebar-row {
+    padding: 0;
+    transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: transparent;
+}
+
+.sidebar-row:selected,
+.sidebar-row:hover {
+    outline: none;
+}
+
+/* ==========================================================================
+   SEPARATOR LINES
+   ========================================================================== */
+
+.separator-lines row:not(:first-child) {
+    border-top: 1px solid alpha(@item_border_color, 0.6);
+}
+
+/* ==========================================================================
+   SELECTABLE ITEM (Navigation items with box layout)
+   ========================================================================== */
+
+.selectable-item {
+    padding: 4px 8px;
+    border-radius: 10px;
+    transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: transparent;
+    outline: none;
+    border: 1px solid transparent;
+}
+
+.selectable-item:hover {
+    background-color: alpha(@selected_color, 0.65);
+    border-color: alpha(@item_border_color, 0.5);
+    box-shadow: 0 2px 8px alpha(@selected_color, 0.25),
+        0 1px 3px alpha(black, 0.06);
+    transform: translateX(2px);
+}
+
+.selectable-item.selected {
+    background-color: @selected_color;
+    border-radius: 10px;
+    border-color: alpha(@accent_color, 0.3);
+    box-shadow: inset 0 1px 0 alpha(white, 0.1),
+        0 2px 6px alpha(@selected_color, 0.3);
+}
+
+/* ==========================================================================
+   DROP CSS (Drag and Drop)
+   ========================================================================== */
+
+.drop-css {
+    border-radius: 10px;
+    transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   SIDEBAR CONTAINER
+   ========================================================================== */
+
+.sidebar {
+    background: @sidebar_bg_color;
+}
+
+.sidebar-card {
+    box-shadow: 0 1px 3px alpha(black, 0.06);
+    border: 1px solid alpha(@item_border_color, 0.8);
+    border-radius: 12px;
+}
+
+/* ==========================================================================
+   GIFT/UPDATE ANIMATION
+   ========================================================================== */
+
+.gift-animation,
+.gift-animation image {
+    animation-name: fancy-bounce-turn;
+    animation-duration: 1.2s;
+    animation-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    animation-delay: 0s;
+    animation-fill-mode: none;
+    animation-play-state: running;
+}
+
+/* ==========================================================================
+   FILTERS CONTAINER BOX STYLING
+   ========================================================================== */
+
+.filters-box {
+    background-color: alpha(@card_bg_color, 0.6);
+    border: 1px solid alpha(@item_border_color, 0.5);
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 2px 8px alpha(black, 0.04);
+}

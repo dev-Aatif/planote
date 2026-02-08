@@ -1,0 +1,25 @@
+*~
+build/
+builddir/
+build-aux/build-dir
+build-aux/flatpak_build
+build-aux/.flatpak-builder
+build-aux/io.github.dev_aatif.planote.Devel.flatpak
+.flatpak-builder/
+subprojects/gxml**/
+*.snap
+planify*txt
+.flatpak
+.buildconfig
+
+# Logs
+*.log
+ninja_log*.txt
+
+# C/Vala objects
+*.o
+
+# Temporary tools
+repro
+test_env
+test_sqlite

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="128px" viewBox="0 0 128 128" width="128px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <linearGradient id="purple-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#B794D4"/>
+            <stop offset="100%" stop-color="#6B4C8F"/>
+        </linearGradient>
+        <linearGradient id="dark-purple" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#6B4C8F"/>
+            <stop offset="100%" stop-color="#4A3366"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Main notepad body -->
+    <rect x="20" y="12" width="88" height="104" rx="8" ry="8" fill="url(#purple-gradient)"/>
+    
+    <!-- Notepad binding (left edge) -->
+    <rect x="20" y="12" width="12" height="104" rx="8" ry="8" fill="url(#dark-purple)"/>
+    
+    <!-- Notepad lines -->
+    <line x1="40" y1="30" x2="100" y2="30" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <line x1="40" y1="45" x2="100" y2="45" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <line x1="40" y1="60" x2="100" y2="60" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <line x1="40" y1="75" x2="100" y2="75" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <line x1="40" y1="90" x2="100" y2="90" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    
+    <!-- Pencil/pen icon -->
+    <g transform="translate(75, 65) rotate(-45)">
+        <rect x="0" y="0" width="8" height="30" rx="2" fill="#ffffff" opacity="0.9"/>
+        <polygon points="0,30 8,30 4,38" fill="#FFD700"/>
+        <circle cx="4" cy="10" r="2" fill="#B794D4"/>
+    </g>
+    
+    <!-- Shadow effect -->
+    <rect x="20" y="106" width="88" height="10" rx="8" fill="#000000" opacity="0.15"/>
+</svg>

@@ -1,0 +1,920 @@
+checkbutton,
+check {
+    min-height: 12px;
+    min-width: 12px;
+    -gtk-icon-size: 12px;
+    padding: 3px;
+    border-radius: 6px;
+}
+
+.font-bold {
+    font-weight: bold;
+}
+
+.fw-600 {
+    font-weight: 600;
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.padding-4 {
+    padding: 4px;
+}
+
+.padding-6 {
+    padding: 6px;
+}
+
+.padding-3 {
+    padding: 3px;
+}
+
+.padding-9 {
+    padding: 9px;
+}
+
+.border-radius-6 {
+    border-radius: 6px;
+}
+
+.border-radius-9 {
+    border-radius: 9px;
+}
+
+.br-12 {
+    border-radius: 12px;
+}
+
+.border-radius-50 {
+    border-radius: 9px;
+}
+
+entry.flat:focus-within {
+    outline-style: none;
+}
+
+.color-primary {
+    color: #1e63ec;
+}
+
+.color-radio {
+    background: #888888;
+    border-color: alpha(#000, 0.3);
+    box-shadow: inset 0 1px 0 0 alpha(white, 0.15),
+        0 1px 2px alpha(black, 0.2);
+    -gtk-icon-shadow: none;
+    padding: 3px;
+    border-radius: 50%;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.color-radio radio {
+    box-shadow: none;
+}
+
+.color-radio radio:checked {
+    background: transparent;
+    color: #fff;
+    -gtk-icon-source: -gtk-icontheme("checkmark-small-symbolic");
+    -gtk-icon-shadow: 0 1px 1px shade(#fff, 0.85);
+}
+
+.color-label-widget {
+    background: @colorAccent;
+    border: 1px solid @colorAccent;
+    border-radius: 50%;
+}
+
+.color-row-picker-selected {
+    background: @colorAccent;
+    border-radius: 50%;
+}
+
+.transition {
+    transition: all 175ms ease-in-out;
+}
+
+.hidden-button image {
+    transition: all 250ms ease-in-out;
+}
+
+.hidden-button.opened image {
+    -gtk-icon-transform: rotate(90deg);
+}
+
+.hidden-button.opened {
+    -gtk-icon-transform: rotate(90deg);
+}
+
+.button-emoji-picker {
+    border-radius: 50%;
+}
+
+.listbox-separator-3 row:not(:first-child) {
+    margin-top: 3px;
+}
+
+.listbox-separator-6 row:not(:first-child) {
+    margin-top: 6px;
+}
+
+.listbox-separator-9 row:not(:first-child) {
+    margin-top: 9px;
+}
+
+.listbox-separator-12 row:not(:first-child) {
+    margin-top: 12px;
+}
+
+.listbox-separator-24 row:not(:first-child) {
+    margin-top: 24px;
+}
+
+/*
+ * MENU STYLE
+ */
+
+.menu-item-danger:hover {
+    background-color: alpha(#e01b24, 0.25);
+}
+
+.header-title {
+    font-weight: bold;
+    letter-spacing: -0.05em;
+    font-size: 15pt;
+}
+
+.editable-label {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    color: inherit;
+    padding: 0;
+}
+
+.listbox-background {
+    background-color: transparent;
+}
+
+.row {
+    border-radius: 6px;
+    background: transparent;
+    transition: all 115ms ease-in-out;
+}
+
+.row:hover {
+    background-color: transparent;
+}
+
+.row:selected {
+    background-color: transparent;
+}
+
+.row.activatable:hover {
+    background-color: transparent;
+}
+
+.row.activatable:active {
+    background-color: transparent;
+}
+
+.row.activatable:selected {
+    background-color: transparent;
+}
+
+.font-weight-500 {
+    font-weight: 500;
+}
+
+.bg-transparent {
+    background: transparent;
+}
+
+.line-through {
+    text-decoration: line-through;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 400ms cubic-bezier(0.4, 0.0, 0.2, 1),
+        color 300ms ease-out;
+    animation: animate-strikethrough 500ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation-delay: 100ms;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
+.complete-animation {
+    background-color: @selected_color;
+    border-radius: 9px;
+}
+
+.priority-1-color check {
+    box-shadow: inset 0 0 0 2px #ff7066;
+    background: rgba(255, 112, 102, 0.1);
+}
+
+.priority-1-icon {
+    color: #ff7066;
+}
+
+.priority-2-icon {
+    color: #ff9a14;
+}
+
+.priority-3-icon {
+    color: #5297ff;
+}
+
+.priority-1-button image {
+    color: #ff7066;
+}
+
+.priority-2-button image {
+    color: #ff9a14;
+}
+
+.priority-3-button image {
+    color: #5297ff;
+}
+
+.priority-2-color check {
+    box-shadow: inset 0 0 0 2px #ff9a14;
+    background: rgba(255, 154, 20, 0.1);
+}
+
+.priority-3-color check {
+    box-shadow: inset 0 0 0 2px #5297ff;
+    background: rgba(82, 151, 255, 0.1);
+}
+
+.priority-4-color check {
+    box-shadow: inset 0 0 0 2px @borders;
+    background: transparent;
+}
+
+.priority-color {
+    padding: 0;
+}
+
+.priority-color check:checked {
+    background-image: linear-gradient(to bottom, shade(#ff7800, 1.2), #ff7800);
+    border-color: shade(#ff7800, 0.9);
+    box-shadow: inset 0 0 0 1px shade(#ff7800, 1.15),
+        inset 0 1px 0 0 shade(#ff7800, 1.3), 0 1px 1px 0 shade(@bg_color, 0.85);
+    color: #fff;
+    -gtk-icon-source: -gtk-icontheme("checkmark-small-symbolic");
+    -gtk-icon-shadow: 0 1px 1px shade(#ff7800, 0.85);
+}
+
+.today-grid {
+    background-color: alpha(#16af54, 0.15);
+    border-radius: 6px;
+    color: #16af54;
+    padding: 3px 6px;
+    font-weight: bold;
+}
+
+.today-color {
+    color: #16af54;
+}
+
+.upcoming-grid {
+    background-color: @upcoming_bg_color;
+    border-radius: 6px;
+    padding: 3px 6px;
+    color: @upcoming_fg_color;
+    font-weight: bold;
+}
+
+.upcoming-color {
+    color: #9141ac;
+}
+
+.overdue-grid {
+    background-color: alpha(#fa1955, 0.125);
+    border-radius: 6px;
+    padding: 3px 6px;
+    color: #fa1955;
+    font-weight: bold;
+}
+
+.overdue-color {
+    color: #fa1955;
+}
+
+.completed-grid {
+    background-color: alpha(#ff7800, 0.15);
+    border-radius: 6px;
+    color: #ff7800;
+    padding: 3px 6px;
+    font-weight: bold;
+}
+
+.completed-image-color,
+.completed-color image {
+    color: #ff7800;
+}
+
+.is_loading image {
+    animation: spin-loading 1000ms linear infinite;
+}
+
+.popover-contents contents {
+    padding: 0;
+}
+
+.circle-color {
+    background: alpha(@colorAccent, 0.25);
+    border: 2px solid @colorAccent;
+    border-radius: 50%;
+}
+
+.item-label-child {
+    background-color: alpha(@colorAccent, 0.125);
+    border-radius: 6px;
+    padding: 0 6px;
+    color: @colorAccent;
+}
+
+.item-label-child label {
+    font-weight: 600;
+}
+
+.description-box {
+    background: alpha(@item_border_color, 0.25);
+    padding: 0px 6px;
+    border-radius: 6px;
+}
+
+.checkbutton-label label {
+    margin-left: 6px;
+}
+
+.circular-check check {
+    border-radius: 50%;
+}
+
+.small-button {
+    font-size: 0.85em;
+    padding: 0px 12px;
+}
+
+.tiny-button {
+    padding: 0 6px;
+    font-weight: 600;
+}
+
+.pane-due-button {
+    background-color: @upcoming_bg_color;
+    border-radius: 6px;
+    padding: 1px 4px;
+    color: @upcoming_fg_color;
+    font-weight: 500;
+}
+
+.pane-due-button.error {
+    background-color: transparent;
+    color: @error_color;
+}
+
+.icon-animation-dropshadow,
+.icon-animation-dropshadow image {
+    animation-name: breathing;
+    animation-duration: 3s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    animation-delay: 0s;
+    animation-fill-mode: none;
+    animation-play-state: running;
+}
+
+.calendar {
+    background: transparent;
+    border: none;
+}
+
+.calendar header {
+    border: none;
+}
+
+.day-name {
+    font-weight: 700;
+    opacity: 0.8;
+    padding-bottom: 0.5em;
+    padding-top: 0.5em;
+}
+
+.circular-check {
+    padding: 0;
+}
+
+.fancy-turn-animation,
+.fancy-turn-animation image {
+    animation: fancy-turn 0.7s ease-in-out;
+}
+
+.fancy-bounce-turn-animation,
+.fancy-bounce-turn-animation image {
+    animation: fancy-bounce-turn 0.7s ease-in-out;
+}
+
+.priority-pulse-animation {
+    border-radius: 50%;
+    animation: priority-pulse 0.6s ease-out;
+}
+
+.pb-6 {
+    padding-bottom: 6px;
+}
+
+.switch-min slider {
+    min-height: 16px;
+    min-width: 16px;
+}
+
+.close-button {
+    border-radius: 50%;
+    padding: 0px;
+}
+
+.min-height-0 {
+    min-height: 0;
+}
+
+.no-font-bold {
+    font-weight: normal;
+}
+
+/*
+* Theme Selector
+*/
+
+.theme-selector {
+    margin: 9px;
+}
+
+.theme-selector {
+    padding: 0;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 1px;
+    background-clip: content-box;
+    border-radius: 9999px;
+    box-shadow: inset 0 0 0 1px @borders;
+}
+
+.theme-selector.light:checked,
+.theme-selector.dark:checked,
+.theme-selector.dark-blue:checked {
+    box-shadow: inset 0 0 0 2px @theme_selected_bg_color;
+}
+
+.theme-selector.light {
+    background-color: #ffffff;
+}
+
+.theme-selector.dark-blue {
+    background-color: #1a5fb4;
+}
+
+.theme-selector.dark {
+    background-color: #000000;
+}
+
+.theme-selector radio {
+    -gtk-icon-source: none;
+    border: none;
+    background: none;
+    box-shadow: none;
+    min-width: 12px;
+    min-height: 12px;
+    transform: translate(27px, 14px);
+    padding: 2px;
+}
+
+checkbutton.theme-selector radio:checked {
+    -gtk-icon-source: -gtk-icontheme("object-select-symbolic");
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}
+
+.header-item-button,
+.header-item-button .image-button {
+    padding: 3px;
+    min-height: 16px;
+    min-width: 16px;
+}
+
+.event-bar {
+    background-color: @colorAccent;
+    border-radius: 1px;
+}
+
+.source-calendar-color {
+    background: linear-gradient(135deg, @colorAccent 0%, alpha(@colorAccent, 0.7) 100%);
+    border-radius: 50%;
+}
+
+.icon-color {
+    color: @colorAccent;
+}
+
+.drop-area {
+    background-color: alpha(#1e63ec, 0.35);
+    border-radius: 6px;
+}
+
+.drop-target:drop(active) {
+    border-radius: 6px;
+    background-color: alpha(#1e63ec, 0.35);
+}
+
+.drop-target-none:drop(active) {
+    border-radius: 0;
+    background-color: transparent;
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+.drop-target-list:drop(active) {
+    border-radius: 6px;
+}
+
+.drop-begin {
+    padding: 3px;
+    background: @selected_color;
+    border-radius: 9px;
+    border: 1px solid @item_border_color;
+}
+
+.indicator {
+    background: #1e63ec;
+    border-radius: 50%;
+}
+
+.view-button {
+    padding: 3px;
+    border-radius: 50%;
+}
+
+.video-content,
+.video-content>overlay,
+.video-content>overlay>picture {
+    border-radius: 6px;
+}
+
+.banner {
+    border-radius: 9px;
+    background-color: #8bc6ec;
+    background: linear-gradient(90deg,
+            hsla(242, 58%, 73%, 1) 0%,
+            hsla(157, 72%, 82%, 1) 100%);
+    padding: 12px;
+}
+
+.banner-text {
+    color: #333;
+}
+
+.active-switch slider {
+    min-height: 16px;
+    min-width: 16px;
+}
+
+.no-selectable:hover,
+.no-selectable:focus,
+.no-selectable:selected,
+.no-selectable.activatable:hover,
+.no-selectable.activatable:active,
+.no-selectable.activatable:selected,
+.no-selectable {
+    box-shadow: none;
+    outline: none;
+    background: transparent;
+}
+
+.pinboard-color {
+    color: #ed333b;
+}
+
+.bg-danger {
+    background: #f66151;
+}
+
+.menu-button-no-padding>.toggle {
+    padding: 0;
+}
+
+.badge {
+    background: @accent_color;
+    border-radius: 3px;
+    padding: 0 3px;
+}
+
+.view-icon {
+    padding: 3px;
+    border-radius: 6px;
+    transition: all 225ms ease-in-out;
+    background-color: alpha(@colorAccent, 0.2);
+    color: @colorAccent;
+    box-shadow: 0 1px 2px alpha(@colorAccent, 0.15);
+}
+
+.theme-mode-image avatar {
+    border-radius: 6px;
+    border: 1px solid @shade_color;
+}
+
+.priority-flying-label {
+    font-weight: bold;
+    color: @colorAccent;
+    transition: all 150ms ease-out;
+}
+
+.priority-label-impact {
+    transform: scale(1.3);
+    opacity: 0;
+    transition: all 150ms ease-out;
+}
+
+.shortcut-widget {
+    background: @upcoming_bg_color;
+    color: @colorAccent;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+.keep-adding-button:checked {
+    background: alpha(@accent_color, 0.15);
+    color: @accent_color;
+}
+
+.add-button {
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.add-button:hover {
+    opacity: 1;
+}
+
+.magic-button image,
+.add-button image {
+    transition: transform 0.2s ease-in-out;
+}
+
+.magic-button {
+    border-radius: 50%;
+    padding: 6px;
+}
+
+.add-button:hover image,
+.magic-button:hover image {
+    transform: rotate(90deg);
+}
+
+.task-item {
+    transition: all 125ms ease-in-out;
+    transform: scale(1);
+    transform-origin: center center;
+    border-radius: 12px;
+}
+
+.task-item.complete {
+    background-color: @selected_color;
+    animation: complete-pulse 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.task-item.selected {
+    margin-bottom: 12px;
+    margin-top: 12px;
+    margin-right: 3px;
+    padding-left: 6px;
+    padding-top: 3px;
+    padding-right: 3px;
+    padding-bottom: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12),
+        0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.theme-dark .task-item.selected {
+    box-shadow: 0 0 0 1px @item_border_color,
+        0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.theme-dark-blue .task-item.selected {
+    box-shadow: 0 0 0 1px @item_border_color,
+        0 2px 4px rgba(42, 48, 58, 0.35);
+}
+
+.task-editing {
+    background-color: @window_bg_color;
+}
+
+.version-popup {
+    background: @card_bg_color;
+    border: 1px solid @item_border_color;
+    padding: 12px;
+    border-radius: 9px;
+}
+
+.border-outline {
+    border: 1px solid @accent_color;
+    color: @accent_color;
+    border-radius: 6px;
+    padding: 0px 6px;
+}
+
+/* ============================================
+ * NOTE CARD STYLES
+ * ============================================ */
+
+.note-card {
+    background: transparent;
+    border-radius: 12px;
+    transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.note-card-inner {
+    background: @card_bg_color;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid alpha(@borders, 0.5);
+    box-shadow: 0 1px 3px alpha(black, 0.04),
+        0 1px 2px alpha(black, 0.06);
+    transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.note-card-hover .note-card-inner {
+    border-color: alpha(@accent_color, 0.4);
+    box-shadow: 0 4px 12px alpha(black, 0.08),
+        0 2px 6px alpha(black, 0.04),
+        0 0 0 1px alpha(@accent_color, 0.15);
+    transform: translateY(-2px);
+}
+
+.note-card-expanded .note-card-inner {
+    background: alpha(@accent_bg_color, 0.5);
+    border-color: alpha(@accent_color, 0.3);
+}
+
+/* Note Title */
+.note-title {
+    font-weight: 600;
+    font-size: 1.05em;
+    color: @window_fg_color;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+}
+
+/* Note Preview Text */
+.note-preview {
+    color: alpha(@window_fg_color, 0.7);
+    font-size: 0.92em;
+    line-height: 1.5;
+}
+
+.note-preview-expanded {
+    color: @window_fg_color;
+    line-height: 1.7;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.note-card-expanded .note-preview {
+    color: @window_fg_color;
+    line-height: 1.6;
+}
+
+/* Smooth content reveal animation */
+.note-card revealer>* {
+    transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Note Date */
+.note-date {
+    font-size: 0.8em;
+    color: alpha(@window_fg_color, 0.5);
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.note-action-buttons {
+    opacity: 1;
+}
+
+.note-action-btn {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px;
+    background: alpha(@window_fg_color, 0.08);
+    color: alpha(@window_fg_color, 0.7);
+    border: none;
+    transition: all 150ms ease-out;
+}
+
+.note-action-btn:hover {
+    background: alpha(@accent_color, 0.15);
+    color: @accent_color;
+    transform: scale(1.08);
+}
+
+.note-action-btn-danger:hover {
+    background: alpha(#e01b24, 0.15);
+    color: #e01b24;
+}
+
+/* View Toggle Button */
+.note-view-toggle {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: @accent_color;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: alpha(@accent_color, 0.1);
+    transition: all 200ms ease-out;
+    min-height: 24px;
+}
+
+.note-view-toggle image {
+    transition: all 200ms ease-out;
+}
+
+.note-view-toggle:hover {
+    background: alpha(@accent_color, 0.18);
+}
+
+.note-toggle-icon {
+    -gtk-icon-size: 14px;
+    opacity: 0.8;
+}
+
+.note-view-toggle-active {
+    background: @accent_color;
+    color: @accent_fg_color;
+}
+
+.note-view-toggle-active .note-toggle-icon {
+    opacity: 1;
+}
+
+.note-view-toggle-active:hover {
+    background: shade(@accent_color, 0.9);
+}
+
+/* Context Menu Styling */
+.note-card popover.menu modelbutton:has(.error-label),
+.note-card popover.menu modelbutton.destructive-action {
+    color: #e01b24;
+}
+
+/* Grid View Note Cards */
+flowboxchild .note-card-inner {
+    min-height: 120px;
+}
+
+/* Dark Theme Adjustments */
+.theme-dark .note-card-inner {
+    background: alpha(@card_bg_color, 0.95);
+    border-color: alpha(@borders, 0.4);
+}
+
+.theme-dark .note-card-hover .note-card-inner {
+    box-shadow: 0 4px 16px alpha(black, 0.25),
+        0 2px 8px alpha(black, 0.15),
+        0 0 0 1px alpha(@accent_color, 0.2);
+}
+
+.theme-dark-blue .note-card-inner {
+    background: alpha(@card_bg_color, 0.9);
+}
+
+.theme-dark-blue .note-card-hover .note-card-inner {
+    box-shadow: 0 4px 16px alpha(black, 0.3),
+        0 2px 8px alpha(black, 0.2),
+        0 0 0 1px alpha(@accent_color, 0.25);
+}.emoji-icon { font-size: 18px; }
+
+/* Sidebar Filter Rows Box Layout */
+.filter-pane-row {
+  margin: 2px 6px;
+  border-radius: 8px;
+  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background-color: transparent; 
+}
+
+.filter-pane-row:hover {
+  background-color: alpha(@view_fg_color, 0.05);
+  transform: translateX(4px);
+}
+
+/* Adjust the internal content padding if needed */
+.filter-pane-row > widget {
+    padding: 6px;
+}

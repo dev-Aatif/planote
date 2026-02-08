@@ -1,0 +1,394 @@
+/*
+ * Copyright © 2025 Alain M. (https://github.com/alainm23/planify)
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301 USA
+ *
+ * Authored by: Alain M. <alainmh23@gmail.com>
+ */
+
+public class Dialogs.Preferences.PreferencesWindow : Adw.PreferencesDialog {
+    public Gee.HashMap<ulong, weak GLib.Object> signal_map = new Gee.HashMap<ulong, weak GLib.Object> ();
+    private Gee.HashMap<string, Dialogs.Preferences.Pages.BasePage> page_map = new Gee.HashMap<string, Dialogs.Preferences.Pages.BasePage> ();
+    private Adw.PreferencesGroup banner_group;
+    private Gtk.ShortcutController shortcut_controller;
+
+    public PreferencesWindow () {
+        Object (
+            content_width: 450,
+            content_height: 600
+        );
+    }
+
+    ~PreferencesWindow () {
+        debug ("Destroying - Dialogs.Preferences.PreferencesWindow\n");
+    }
+
+    construct {
+        var page = new Adw.PreferencesPage ();
+        page.title = _("Preferences");
+        page.name = "preferences";
+        page.icon_name = "applications-system-symbolic";
+
+        var banner_title = new Gtk.Label (_("Support Planify")) {
+            halign = START,
+            css_classes = { "font-bold", "banner-text" }
+        };
+
+        var banner_description =
+            new Gtk.Label (_(
+                               "Planote is a fork of Planify, created by alainm23. If you enjoy this app, please consider supporting the original creator!")) {
+            halign = START,
+            xalign = 0,
+            yalign = 0,
+            wrap = true,
+            css_classes = { "caption", "banner-text" }
+        };
+
+        var banner_button = new Gtk.Button.with_label (_("Donate Now")) {
+            halign = START,
+            margin_top = 6,
+            css_classes = { "banner-text" }
+        };
+
+        var close_button = new Gtk.Button.from_icon_name ("window-close-symbolic") {
+            css_classes = { "border-radius-50", "banner-text" },
+            valign = START,
+            halign = END
+        };
+
+        var banner_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
+            valign = START,
+            halign = START
+        };
+
+        banner_box.append (banner_title);
+        banner_box.append (banner_description);
+        banner_box.append (banner_button);
+
+        var banner_overlay = new Gtk.Overlay () {
+            css_classes = { "banner", "card" },
+        };
+        banner_overlay.child = banner_box;
+        banner_overlay.add_overlay (close_button);
+
+        banner_group = new Adw.PreferencesGroup ();
+        banner_group.add (banner_overlay);
+
+        Services.Settings.get_default ().settings.bind ("show-support-banner", banner_group, "visible",
+                                                        GLib.SettingsBindFlags.DEFAULT);
+
+        signal_map[banner_button.clicked.connect (() => {
+            push_subpage (build_page ("donate"));
+        })] = banner_button;
+
+        signal_map[close_button.clicked.connect (() => {
+            Services.Settings.get_default ().settings.set_boolean ("show-support-banner", false);
+        })] = close_button;
+
+        page.add (banner_group);
+
+        // Accounts
+        var accounts_row = new Adw.ActionRow ();
+        accounts_row.activatable = true;
+        accounts_row.add_prefix (generate_icon ("cloud-outline-thick-symbolic"));
+        accounts_row.add_suffix (generate_icon ("go-next-symbolic"));
+        accounts_row.title = _("Accounts");
+        accounts_row.subtitle = _("Sync your favorite to-do providers");
+
+        signal_map[accounts_row.activated.connect (() => {
+            push_subpage (build_page ("accounts"));
+        })] = accounts_row;
+
+        var accounts_group = new Adw.PreferencesGroup ();
+        accounts_group.add (accounts_row);
+
+        page.add (accounts_group);
+
+        // Personalization
+        var home_page_row = new Adw.ActionRow () {
+            activatable = true,
+            title = _("Home View"),
+            subtitle = _("Set the view shown at first launch")
+        };
+        home_page_row.add_prefix (generate_icon ("go-home-symbolic"));
+        home_page_row.add_suffix (generate_icon ("go-next-symbolic"));
+        
+        signal_map[home_page_row.activated.connect (() => {
+            push_subpage (build_page ("home-view"));
+        })] = home_page_row;
+
+        var general_row = new Adw.ActionRow ();
+        general_row.activatable = true;
+        general_row.add_prefix (generate_icon ("settings-symbolic"));
+        general_row.add_suffix (generate_icon ("go-next-symbolic"));
+        general_row.title = _("General");
+        general_row.subtitle = _("Customize to your liking");
+
+        signal_map[general_row.activated.connect (() => {
+            push_subpage (build_page ("general-page"));
+        })] = general_row;
+
+        var task_setting_row = new Adw.ActionRow ();
+        task_setting_row.activatable = true;
+        task_setting_row.add_prefix (generate_icon ("check-round-outline-symbolic"));
+        task_setting_row.add_suffix (generate_icon ("go-next-symbolic"));
+        task_setting_row.title = _("Task Settings");
+
+        signal_map[task_setting_row.activated.connect (() => {
+            push_subpage (build_page ("task-setting"));
+        })] = task_setting_row;
+
+        var sidebar_row = new Adw.ActionRow ();
+        sidebar_row.activatable = true;
+        sidebar_row.add_prefix (generate_icon ("dock-left-symbolic"));
+        sidebar_row.add_suffix (generate_icon ("go-next-symbolic"));
+        sidebar_row.title = _("Sidebar");
+        sidebar_row.subtitle = _("Customize your sidebar");
+
+        signal_map[sidebar_row.activated.connect (() => {
+            push_subpage (build_page ("sidebar-page"));
+        })] = sidebar_row;
+
+        var appearance_row = new Adw.ActionRow ();
+        appearance_row.activatable = true;
+        appearance_row.add_prefix (generate_icon ("color-symbolic"));
+        appearance_row.add_suffix (generate_icon ("go-next-symbolic"));
+        appearance_row.title = _("Appearance");
+        appearance_row.subtitle = Util.get_default ().get_theme_name ();
+
+        signal_map[appearance_row.activated.connect (() => {
+            push_subpage (build_page ("appearance"));
+        })] = appearance_row;
+
+        var quick_add_row = new Adw.ActionRow ();
+        quick_add_row.activatable = true;
+        quick_add_row.add_prefix (generate_icon ("tab-new-symbolic"));
+        quick_add_row.add_suffix (generate_icon ("go-next-symbolic"));
+        quick_add_row.title = _("Quick Add");
+        quick_add_row.subtitle = _("Adding to-do's from anywhere");
+
+        signal_map[quick_add_row.activated.connect (() => {
+            push_subpage (build_page ("quick-add"));
+        })] = quick_add_row;
+
+        var notes_appearance_row = new Adw.ActionRow ();
+        notes_appearance_row.activatable = true;
+        notes_appearance_row.add_prefix (generate_icon ("text-symbolic"));
+        notes_appearance_row.add_suffix (generate_icon ("go-next-symbolic"));
+        notes_appearance_row.title = _("Notes Appearance");
+        notes_appearance_row.subtitle = _("Typography and status bar settings");
+
+        signal_map[notes_appearance_row.activated.connect (() => {
+            push_subpage (build_page ("notes-appearance"));
+        })] = notes_appearance_row;
+
+        var backups_row = new Adw.ActionRow ();
+        backups_row.activatable = true;
+        backups_row.add_prefix (generate_icon ("arrow3-down-symbolic"));
+        backups_row.add_suffix (generate_icon ("go-next-symbolic"));
+        backups_row.title = _("Backups");
+        backups_row.subtitle = _("Backup or migrate from Planner.");
+
+        var tutorial_row = new Adw.ActionRow ();
+        tutorial_row.activatable = true;
+        tutorial_row.add_prefix (generate_icon ("rescue-symbolic"));
+        tutorial_row.add_suffix (generate_icon ("go-next-symbolic"));
+        tutorial_row.title = _("Create Tutorial Project");
+        tutorial_row.subtitle = _("Learn the app step by step with a short tutorial project");
+
+        var personalization_group = new Adw.PreferencesGroup ();
+        personalization_group.add (home_page_row);
+        personalization_group.add (general_row);
+        personalization_group.add (task_setting_row);
+        personalization_group.add (sidebar_row);
+        personalization_group.add (appearance_row);
+        personalization_group.add (quick_add_row);
+        personalization_group.add (notes_appearance_row);
+        personalization_group.add (backups_row);
+        personalization_group.add (tutorial_row);
+
+        page.add (personalization_group);
+
+        // Donate row in personalization section
+        var donate_row = new Adw.ActionRow ();
+        donate_row.activatable = true;
+        donate_row.add_prefix (generate_icon ("heart-outline-thick-symbolic"));
+        donate_row.add_suffix (generate_icon ("go-next-symbolic"));
+        donate_row.title = _("Support Planify");
+        donate_row.subtitle = _("Support the original creator alainm23");
+
+        signal_map[donate_row.activated.connect (() => {
+            push_subpage (build_page ("donate"));
+        })] = donate_row;
+
+        var support_group = new Adw.PreferencesGroup ();
+        support_group.add (donate_row);
+
+        page.add (support_group);
+
+        var privacy_group = new Adw.PreferencesGroup ();
+        privacy_group.title = _("Privacy");
+
+        var privacy_policy_row = new Adw.ActionRow ();
+        privacy_policy_row.activatable = true;
+        privacy_policy_row.add_prefix (generate_icon ("shield-safe-symbolic"));
+        privacy_policy_row.add_suffix (generate_icon ("go-next-symbolic"));
+        privacy_policy_row.title = _("Privacy Policy");
+        privacy_policy_row.subtitle = _("We have nothing on you");
+
+        var delete_row = new Adw.ActionRow ();
+        delete_row.activatable = true;
+        delete_row.add_prefix (generate_icon ("user-trash-symbolic"));
+        delete_row.add_suffix (generate_icon ("go-next-symbolic"));
+        delete_row.title = _("Delete App Data");
+
+        privacy_group.add (privacy_policy_row);
+        privacy_group.add (delete_row);
+
+        page.add (privacy_group);
+
+        signal_map[tutorial_row.activated.connect (() => {
+            Util.get_default ().create_tutorial_project ();
+            add_toast (Util.get_default ().create_toast (_("A tutorial project has been created")));
+        })] = tutorial_row;
+
+        signal_map[backups_row.activated.connect (() => {
+            push_subpage (build_page ("backups-page"));
+        })] = backups_row;
+
+        signal_map[privacy_policy_row.activated.connect (() => {
+            push_subpage (build_page ("privacy-policy"));
+        })] = privacy_policy_row;
+
+        signal_map[delete_row.activated.connect (() => {
+            Util.get_default ().clear_database (_("Delete All Data?"),
+                                                _("Deletes all your lists, tasks, and reminders irreversibly"),
+                                                Planote.instance.main_window);
+        })] = delete_row;
+
+        add (page);
+        Services.EventBus.get_default ().disconnect_typing_accel ();
+
+        var shortcut = new Gtk.Shortcut (new Gtk.KeyvalTrigger (Gdk.Key.Escape, 0), new Gtk.CallbackAction ((widget, args) => {
+            close ();
+            return true;
+        }));
+
+        shortcut_controller = new Gtk.ShortcutController ();
+        shortcut_controller.add_shortcut (shortcut);
+        add_controller (shortcut_controller);
+
+        closed.connect (() => {
+            clean_up ();
+            Services.EventBus.get_default ().connect_typing_accel ();
+        });
+    }
+
+    private Gtk.Widget generate_icon (string icon_name, int size = 16) {
+        return new Gtk.Image.from_icon_name (icon_name) {
+                   pixel_size = size
+        };
+    }
+
+    private Adw.NavigationPage ? build_page (string page) {
+        if (page_map.has_key (page)) {
+            return page_map[page];
+        }
+        
+        switch (page) {
+            case "accounts":
+                page_map[page] = new Dialogs.Preferences.Pages.Accounts (this);
+                break;
+            case "home-view":
+                page_map[page] = new Dialogs.Preferences.Pages.HomeView (this);
+                break;
+            case "appearance":
+                page_map[page] = new Dialogs.Preferences.Pages.Appearance (this);
+                break;
+            case "backups-page":
+                page_map[page] = new Dialogs.Preferences.Pages.Backup (this);
+                break;
+            case "sidebar-page":
+                page_map[page] = new Dialogs.Preferences.Pages.Sidebar (this);
+                break;
+            case "general-page":
+                page_map[page] = new Dialogs.Preferences.Pages.General (this);
+                break;
+            case "task-setting":
+                page_map[page] = new Dialogs.Preferences.Pages.TaskSetting (this);
+                break;
+            case "quick-add":
+                page_map[page] = new Dialogs.Preferences.Pages.QuickAdd (this);
+                break;
+            case "notes-appearance":
+                page_map[page] = new Dialogs.Preferences.Pages.NotesAppearance (this);
+                break;
+            case "privacy-policy":
+                page_map[page] = new Dialogs.Preferences.Pages.PrivacyPolicy (this);
+                break;
+            case "donate":
+                page_map[page] = new Dialogs.Preferences.Pages.Donate (this);
+                break;
+            default:
+                warning ("The page %s does not exist\n", page);
+                return null;
+        }
+
+        return page_map[page];
+    }
+
+    public void show_page (string page_key) {
+        var page = build_page (page_key);
+        if (page != null) {
+            push_subpage (page);
+        }
+    }
+
+    public void clean_up () {
+        foreach (var entry in signal_map.entries) {
+            entry.value.disconnect (entry.key);
+        }
+
+        signal_map.clear ();
+
+        if (shortcut_controller != null) {
+            remove_controller (shortcut_controller);
+            shortcut_controller = null;
+        }
+
+        foreach (Dialogs.Preferences.Pages.BasePage page in page_map.values) {
+            page.clean_up ();
+        }
+
+        page_map.clear ();
+    }
+
+    public override void dispose () {
+        clean_up ();
+        base.dispose ();
+    }
+
+    private void setup_visibility_detection (Widgets.TranslationRow translation_row) {
+        translation_row.load_translation_data.begin ();
+        
+        translation_row.map.connect (() => {
+            Timeout.add (1500, () => {
+                translation_row.trigger_animation ();
+                return false;
+            });
+        });
+    }
+}

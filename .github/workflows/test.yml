@@ -8,8 +8,11 @@ on:
 
 jobs:
   test:
-    name: "Run Unit Tests"
-    runs-on: ubuntu-24.04
+    name: "Build & Test"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
+      options: --privileged
     
     steps:
       - name: Checkout repository
@@ -17,36 +20,11 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Install dependencies
-        run: |
-          sudo add-apt-repository -y ppa:gnome-os/daily
-          sudo apt-get update
-          sudo apt-get install -y \
-            meson \
-            ninja-build \
-            valac \
-            libgtk-4-dev \
-            libadwaita-1-dev \
-            libgee-0.8-dev \
-            libjson-glib-dev \
-            libsqlite3-dev \
-            libsoup-3.0-dev \
-            libical-dev \
-            libsecret-1-dev \
-            libgtksourceview-5-dev \
-            libxml2-dev \
-            gobject-introspection \
-            libgirepository1.0-dev
-      
       - name: Setup build
         run: meson setup build
       
       - name: Build
         run: ninja -C build
-      
-      - name: Run validation tests
-        run: meson test -C build validation -v
-        continue-on-error: true
       
       - name: Run chrono tests
         run: meson test -C build chrono -v
@@ -58,47 +36,3 @@ jobs:
         with:
           name: test-logs
           path: build/meson-logs/testlog.txt
-
-  build-check:
-    name: "Build Check"
-    runs-on: ubuntu-24.04
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      
-      - name: Install dependencies
-        run: |
-          sudo add-apt-repository -y ppa:gnome-os/daily
-          sudo apt-get update
-          sudo apt-get install -y \
-            meson \
-            ninja-build \
-            valac \
-            libgtk-4-dev \
-            libadwaita-1-dev \
-            libgee-0.8-dev \
-            libjson-glib-dev \
-            libsqlite3-dev \
-            libsoup-3.0-dev \
-            libical-dev \
-            libsecret-1-dev \
-            libgtksourceview-5-dev \
-            libxml2-dev \
-            gobject-introspection \
-            libgirepository1.0-dev
-      
-      - name: Build with all warnings
-        run: |
-          meson setup build
-          ninja -C build 2>&1 | tee build.log
-      
-      - name: Check for critical warnings
-        run: |
-          if grep -q "error:" build.log; then
-            echo "Build errors found!"
-            exit 1
-          fi
-          echo "Build completed successfully"

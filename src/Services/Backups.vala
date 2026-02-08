@@ -671,76 +671,40 @@ public class Services.Backups : Object {
         Services.Store.instance ().reset_cache ();  // Clear in-memory caches
         Util.get_default ().create_local_source ();
 
-        // Track which entity failed for error reporting
-        string failure_entity = "";
-        
-        // Wrap all entity insertions in a single transaction for atomicity
-        bool transaction_success = Services.Database.get_default ().run_transaction (() => {
-            // Create Sources
-            foreach (Objects.Source source in backup.sources) {
-                if (!Services.Database.get_default ().insert_source (source)) {
-                    failure_entity = "source: " + source.id;
-                    return false;
-                }
-            }
-
-            // Create Labels
-            foreach (Objects.Label item in backup.labels) {
-                if (!Services.Database.get_default ().insert_label (item)) {
-                    failure_entity = "label: " + item.id;
-                    return false;
-                }
-            }
-
-            // Create Projects
-            foreach (Objects.Project item in backup.projects) {
-                if (!Services.Database.get_default ().insert_project (item)) {
-                    failure_entity = "project: " + item.id;
-                    return false;
-                }
-            }
-
-            // Create Sections
-            foreach (Objects.Section item in backup.sections) {
-                if (!Services.Database.get_default ().insert_section (item)) {
-                    failure_entity = "section: " + item.id;
-                    return false;
-                }
-            }
-
-            // Create Items
-            foreach (Objects.Item item in backup.items) {
-                if (!Services.Database.get_default ().insert_item (item)) {
-                    failure_entity = "item: " + item.id;
-                    return false;
-                }
-            }
-
-            // Create Notebooks
-            foreach (Objects.Notebook notebook in backup.notebooks) {
-                if (!Services.Database.get_default ().insert_notebook (notebook)) {
-                    failure_entity = "notebook: " + notebook.id;
-                    return false;
-                }
-            }
-
-            // Create Notes
-            foreach (Objects.Note note in backup.notes) {
-                if (!Services.Database.get_default ().insert_note (note)) {
-                    failure_entity = "note: " + note.id;
-                    return false;
-                }
-            }
-
-            return true;  // Commit transaction
-        });
-
-        if (!transaction_success) {
-            warning ("Backup import failed and was rolled back. Failed entity: %s", failure_entity);
-            show_error_message (_("Backup import failed. The database was rolled back to its previous state."));
-            return;
+        // Create Sources
+        foreach (Objects.Source source in backup.sources) {
+            Services.Database.get_default ().insert_source (source);
         }
 
+        // Create Labels
+        foreach (Objects.Label item in backup.labels) {
+            Services.Database.get_default ().insert_label (item);
+        }
+
+        // Create Projects
+        foreach (Objects.Project item in backup.projects) {
+            Services.Database.get_default ().insert_project (item);
+        }
+
+        // Create Sections
+        foreach (Objects.Section item in backup.sections) {
+            Services.Database.get_default ().insert_section (item);
+        }
+
+        // Create Items
+        foreach (Objects.Item item in backup.items) {
+            Services.Database.get_default ().insert_item (item);
+        }
+
+        // Create Notebooks
+        foreach (Objects.Notebook notebook in backup.notebooks) {
+            Services.Database.get_default ().insert_notebook (notebook);
+        }
+
+        // Create Notes
+        foreach (Objects.Note note in backup.notes) {
+            Services.Database.get_default ().insert_note (note);
+        }
 
         show_message ();
     }

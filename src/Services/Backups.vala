@@ -662,50 +662,98 @@ public class Services.Backups : Object {
     }
 
     public void patch_backup (Objects.Backup backup) {
+        var db = Services.Database.get_default ();
+        
+        // Step 1: Backup existing data to temp tables (safety net)
+        if (!db.backup_to_temp_tables ()) {
+            show_error_message (_("Failed to create safety backup. Import aborted."));
+            return;
+        }
+        
+        bool import_success = false;
+        
+        // Step 2: Try to import within a transaction
+        import_success = db.run_transaction (() => {
+            // Clear all tables (but keep structure)
+            if (!db.clear_all_tables ()) {
+                warning ("Failed to clear tables during import");
+                return false;
+            }
+            
+            // Import Sources
+            foreach (Objects.Source source in backup.sources) {
+                if (!db.insert_source (source)) {
+                    warning ("Failed to import source: %s", source.id);
+                    return false;
+                }
+            }
+            
+            // Import Labels
+            foreach (Objects.Label label in backup.labels) {
+                if (!db.insert_label (label)) {
+                    warning ("Failed to import label: %s", label.id);
+                    return false;
+                }
+            }
+            
+            // Import Projects
+            foreach (Objects.Project project in backup.projects) {
+                if (!db.insert_project (project)) {
+                    warning ("Failed to import project: %s", project.id);
+                    return false;
+                }
+            }
+            
+            // Import Sections
+            foreach (Objects.Section section in backup.sections) {
+                if (!db.insert_section (section)) {
+                    warning ("Failed to import section: %s", section.id);
+                    return false;
+                }
+            }
+            
+            // Import Items
+            foreach (Objects.Item item in backup.items) {
+                if (!db.insert_item (item)) {
+                    warning ("Failed to import item: %s", item.id);
+                    return false;
+                }
+            }
+            
+            // Import Notebooks
+            foreach (Objects.Notebook notebook in backup.notebooks) {
+                if (!db.insert_notebook (notebook)) {
+                    warning ("Failed to import notebook: %s", notebook.id);
+                    return false;
+                }
+            }
+            
+            // Import Notes
+            foreach (Objects.Note note in backup.notes) {
+                if (!db.insert_note (note)) {
+                    warning ("Failed to import note: %s", note.id);
+                    return false;
+                }
+            }
+            
+            return true;  // All imports successful - commit transaction
+        });
+        
+        if (!import_success) {
+            // Step 3a: Import failed - restore from backup
+            warning ("Backup import failed, restoring original data...");
+            db.restore_from_temp_tables ();
+            show_error_message (_("Import failed. Your original data has been restored."));
+            return;
+        }
+        
+        // Step 3b: Import succeeded - clean up temp tables and update settings
+        db.clear_temp_tables ();
         Services.Settings.get_default ().reset_settings ();
         Services.Settings.get_default ().settings.set_string ("local-inbox-project-id", backup.local_inbox_project_id);
-
-        // Clear Database and reset Store cache
-        Services.Database.get_default ().clear_database ();
-        Services.Database.get_default ().init_database ();
         Services.Store.instance ().reset_cache ();  // Clear in-memory caches
         Util.get_default ().create_local_source ();
-
-        // Create Sources
-        foreach (Objects.Source source in backup.sources) {
-            Services.Database.get_default ().insert_source (source);
-        }
-
-        // Create Labels
-        foreach (Objects.Label item in backup.labels) {
-            Services.Database.get_default ().insert_label (item);
-        }
-
-        // Create Projects
-        foreach (Objects.Project item in backup.projects) {
-            Services.Database.get_default ().insert_project (item);
-        }
-
-        // Create Sections
-        foreach (Objects.Section item in backup.sections) {
-            Services.Database.get_default ().insert_section (item);
-        }
-
-        // Create Items
-        foreach (Objects.Item item in backup.items) {
-            Services.Database.get_default ().insert_item (item);
-        }
-
-        // Create Notebooks
-        foreach (Objects.Notebook notebook in backup.notebooks) {
-            Services.Database.get_default ().insert_notebook (notebook);
-        }
-
-        // Create Notes
-        foreach (Objects.Note note in backup.notes) {
-            Services.Database.get_default ().insert_note (note);
-        }
-
+        
         show_message ();
     }
 

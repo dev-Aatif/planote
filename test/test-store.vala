@@ -3,22 +3,24 @@
  * Tests singleton behavior, signal emissions, collection safety, and CRUD operations
  */
 
-private Services.Database test_db;
 private string test_db_path;
+private bool db_initialized = false;
 
 void setup_test_store () {
-    // Create isolated test database
-    test_db_path = Path.build_filename (Environment.get_tmp_dir (), "planote_store_test_%d.db".printf ((int) GLib.get_real_time ()));
-    test_db = new Services.Database.with_path (test_db_path);
-    test_db.init_database ();
+    // Initialize the global Database singleton if not already done
+    // Store.instance() uses Database.get_default() internally
+    if (!db_initialized) {
+        Services.Database.get_default ().init_database ();
+        db_initialized = true;
+    }
+    
+    // Reset Store cache to ensure clean state
+    Services.Store.instance ().reset_cache ();
 }
 
 void teardown_test_store () {
-    if (FileUtils.test (test_db_path, FileTest.EXISTS)) {
-        FileUtils.remove (test_db_path);
-    }
-    FileUtils.remove (test_db_path + "-wal");
-    FileUtils.remove (test_db_path + "-shm");
+    // Reset cache after each test
+    Services.Store.instance ().reset_cache ();
 }
 
 /*

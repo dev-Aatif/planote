@@ -114,6 +114,52 @@ namespace Utils.Validation {
     }
     
     /**
+     * Delegate to get the parent ID of an item.
+     * Used by check_deep_circular_reference for generic traversal.
+     */
+    public delegate string? GetParentFunc (string id);
+    
+    /**
+     * Deep circular reference check that traverses the entire parent chain.
+     * Detects indirect cycles like A → B → C → A.
+     * @param id The item's ID that would get a new parent
+     * @param proposed_parent_id The proposed parent ID
+     * @param get_parent Function to get the parent of any item by ID
+     * @param max_depth Maximum depth to traverse (prevents infinite loops)
+     * @return true if the reference is valid (no cycle detected)
+     */
+    public bool check_deep_circular_reference (string id, string? proposed_parent_id, 
+                                                GetParentFunc get_parent, int max_depth = 100) {
+        if (proposed_parent_id == null || proposed_parent_id == "") {
+            return true;  // No parent is always valid
+        }
+        
+        // Direct self-reference
+        if (id == proposed_parent_id) {
+            return false;
+        }
+        
+        // Traverse the chain of parents starting from proposed_parent
+        var visited = new Gee.HashSet<string> ();
+        visited.add (id);  // The item itself
+        
+        string? current = proposed_parent_id;
+        int depth = 0;
+        
+        while (current != null && current != "" && depth < max_depth) {
+            if (visited.contains (current)) {
+                // Found a cycle!
+                return false;
+            }
+            visited.add (current);
+            current = get_parent (current);
+            depth++;
+        }
+        
+        return true;  // No cycle detected
+    }
+    
+    /**
      * Validate a title is not empty or whitespace-only.
      * @param title The title to validate
      * @return true if valid

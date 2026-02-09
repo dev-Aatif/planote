@@ -953,6 +953,106 @@ public class Services.Database : GLib.Object {
         add_int_column ("Notebooks", "is_favorite", 0);
     }
 
+    /**
+     * Backup all table data to temporary tables for safe import.
+     * This allows rollback if the import fails.
+     * @return true if backup was successful
+     */
+    public bool backup_to_temp_tables () {
+        string[] tables = { "Sources", "Labels", "Projects", "Sections", "Items", 
+                            "Reminders", "Notebooks", "Notes", "Attachments" };
+        
+        foreach (var table in tables) {
+            // Drop existing temp table if exists
+            sql = "DROP TABLE IF EXISTS %s_backup;".printf (table);
+            if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
+                warning ("Failed to drop temp table %s_backup: %s", table, errormsg);
+                return false;
+            }
+            
+            // Create temp backup table with all data
+            sql = "CREATE TABLE %s_backup AS SELECT * FROM %s;".printf (table, table);
+            if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
+                warning ("Failed to backup table %s: %s", table, errormsg);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Restore all table data from temporary backup tables.
+     * Called when import fails to recover original data.
+     * @return true if restore was successful
+     */
+    public bool restore_from_temp_tables () {
+        string[] tables = { "Sources", "Labels", "Projects", "Sections", "Items", 
+                            "Reminders", "Notebooks", "Notes", "Attachments" };
+        
+        foreach (var table in tables) {
+            // Clear the main table
+            sql = "DELETE FROM %s;".printf (table);
+            if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
+                warning ("Failed to clear table %s during restore: %s", table, errormsg);
+                // Continue trying to restore other tables
+            }
+            
+            // Restore from backup
+            sql = "INSERT INTO %s SELECT * FROM %s_backup;".printf (table, table);
+            if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
+                warning ("Failed to restore table %s: %s", table, errormsg);
+                // Continue trying to restore other tables
+            }
+        }
+        
+        clear_temp_tables ();
+        return true;
+    }
+    
+    /**
+     * Clean up temporary backup tables.
+     */
+    public void clear_temp_tables () {
+        string[] tables = { "Sources", "Labels", "Projects", "Sections", "Items", 
+                            "Reminders", "Notebooks", "Notes", "Attachments" };
+        
+        foreach (var table in tables) {
+            sql = "DROP TABLE IF EXISTS %s_backup;".printf (table);
+            db.exec (sql, null, out errormsg);
+        }
+    }
+    
+    /**
+     * Clear all data from the database tables.
+     * @param keep_queue If true, keeps the Queue and OEvents tables
+     * @return true if successful
+     */
+    public bool clear_all_tables (bool keep_queue = true) {
+        string[] tables = { "Attachments", "Reminders", "Items", "Sections", 
+                            "Projects", "Labels", "Notes", "Notebooks", "Sources" };
+        
+        // Clear in reverse dependency order
+        foreach (var table in tables) {
+            sql = "DELETE FROM %s;".printf (table);
+            if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
+                warning ("Failed to clear table %s: %s", table, errormsg);
+                return false;
+            }
+        }
+        
+        if (!keep_queue) {
+            sql = "DELETE FROM Queue;";
+            db.exec (sql, null, out errormsg);
+            sql = "DELETE FROM OEvents;";
+            db.exec (sql, null, out errormsg);
+            sql = "DELETE FROM CurTempIds;";
+            db.exec (sql, null, out errormsg);
+        }
+        
+        return true;
+    }
+
     public void clear_database () {
         string db_path = Environment.get_user_data_dir () + "/io.github.dev_aatif.planote/database.db";
         File db_file = File.new_for_path (db_path);

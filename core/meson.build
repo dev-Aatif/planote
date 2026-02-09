@@ -15,6 +15,7 @@ core_files = files(
     'Services/Todoist.vala',
     'Services/ColorSchemeSettings.vala',
     'Services/UndoManager.vala',
+    'Services/AutoSave.vala',
 
     'Services/CalDAV/Core.vala',
     'Services/CalDAV/CalDAVClient.vala',

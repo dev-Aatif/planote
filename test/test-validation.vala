@@ -118,8 +118,8 @@ void test_valid_parent_reference () {
 }
 
 void test_empty_parent_reference () {
-    // Empty parent_id is not valid (no parent)
-    assert (check_circular_reference ("item-1", "") == false);
+    // Empty parent_id means no parent, which is valid
+    assert (check_circular_reference ("item-1", "") == true);
     
     print ("  ✓ test_empty_parent_reference passed\n");
 }
@@ -224,7 +224,7 @@ string sanitize_content (string? content) {
 
 bool check_circular_reference (string id, string parent_id) {
     if (parent_id == "" || parent_id == null) {
-        return false;  // No parent reference
+        return true;  // No parent is valid
     }
     return id != parent_id;
 }

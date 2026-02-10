@@ -108,13 +108,13 @@ public class Services.Backups : Object {
         var tutorial_notebook_ids = new Gee.HashSet<string> ();
         
         foreach (Objects.Project project in Services.Database.get_default ().get_projects_collection ()) {
-            if (project.name == _("Meet Tasks")) {
+            if (project.name == "Meet Tasks") {
                 tutorial_project_ids.add (project.id);
             }
         }
         
         foreach (Objects.Notebook notebook in Services.Database.get_default ().get_notebooks_collection ()) {
-            if (notebook.name == _("Getting Started with Notes")) {
+            if (notebook.name == "Getting Started with Notes") {
                 tutorial_notebook_ids.add (notebook.id);
             }
         }

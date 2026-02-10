@@ -3,13 +3,13 @@
  * Tests singleton behavior, signal emissions, collection safety, and CRUD operations
  */
 
-private string test_db_path;
 private bool db_initialized = false;
 
 void setup_test_store () {
-    // Initialize the global Database singleton if not already done
-    // Store.instance() uses Database.get_default() internally
+    // Use a temporary database for test isolation
     if (!db_initialized) {
+        var test_path = "/tmp/planote_store_test_%d.db".printf ((int) GLib.Random.next_int ());
+        Services.Database.get_default ().db_path = test_path;
         Services.Database.get_default ().init_database ();
         db_initialized = true;
     }

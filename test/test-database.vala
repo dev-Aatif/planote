@@ -439,10 +439,17 @@ void test_section_crud () {
 void test_notebook_crud () {
     setup_test_database ();
     
+    // Create a source first (FK constraint on source_id)
+    var source = new Objects.Source ();
+    source.id = "test-source-notebook";
+    source.display_name = "Test Source";
+    test_db.insert_source (source);
+    
     var notebook = new Objects.Notebook ();
     notebook.id = "test-notebook-001";
     notebook.name = "Test Notebook";
     notebook.color = "#00FF00";
+    notebook.source_id = "test-source-notebook";
     
     bool result = test_db.insert_notebook (notebook);
     assert (result == true);
@@ -464,8 +471,16 @@ void test_notebook_crud () {
 void test_note_crud () {
     setup_test_database ();
     
+    // Create a source first (FK constraint on notebook's source_id)
+    var source = new Objects.Source ();
+    source.id = "test-source-note";
+    source.display_name = "Test Source";
+    test_db.insert_source (source);
+    
     var notebook = new Objects.Notebook ();
     notebook.id = "note-test-notebook";
+    notebook.name = "Note Test Notebook";
+    notebook.source_id = "test-source-note";
     test_db.insert_notebook (notebook);
     
     var note = new Objects.Note ();
@@ -473,6 +488,7 @@ void test_note_crud () {
     note.title = "Test Note Title";
     note.content = "Test note content with **markdown**";
     note.notebook_id = "note-test-notebook";
+    note.source_id = "test-source-note";
     
     bool result = test_db.insert_note (note);
     assert (result == true);

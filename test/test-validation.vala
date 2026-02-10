@@ -141,10 +141,10 @@ void test_invalid_titles () {
     assert (is_valid_title (null) == false);
     assert (is_valid_title ("   ") == false);  // Whitespace only
     
-    // Too long
+    // Too long (> MAX_TITLE_LENGTH which is 1000)
     var long_title = new StringBuilder ();
-    for (int i = 0; i < 200; i++) {
-        long_title.append ("word ");
+    for (int i = 0; i < 210; i++) {
+        long_title.append ("word ");  // 210 * 5 = 1050 chars > 1000
     }
     assert (is_valid_title (long_title.str) == false);
     

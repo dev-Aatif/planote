@@ -25,6 +25,7 @@ public class Services.AutoSave : GLib.Object {
     private static AutoSave? _instance;
     
     private Gee.HashMap<string, uint> pending_saves;
+    private Gee.HashMap<string, unowned Objects.Note> pending_notes;
     private const uint DEBOUNCE_MS = 2000;  // 2 second debounce
     
     public static AutoSave get_default () {
@@ -36,6 +37,7 @@ public class Services.AutoSave : GLib.Object {
     
     construct {
         pending_saves = new Gee.HashMap<string, uint> ();
+        pending_notes = new Gee.HashMap<string, unowned Objects.Note> ();
     }
     
     /**
@@ -55,6 +57,7 @@ public class Services.AutoSave : GLib.Object {
         });
         
         pending_saves.set (note.id, timeout_id);
+        pending_notes.set (note.id, note);
     }
     
     /**
@@ -65,6 +68,7 @@ public class Services.AutoSave : GLib.Object {
         if (pending_saves.has_key (note_id)) {
             Source.remove (pending_saves.get (note_id));
             pending_saves.unset (note_id);
+            pending_notes.unset (note_id);
         }
     }
     
@@ -73,13 +77,18 @@ public class Services.AutoSave : GLib.Object {
      * Call this before app close to ensure no data loss.
      */
     public void flush_all () {
-        // We can't easily force immediate saves since we don't store note references
-        // Instead, just cancel all pending timeouts - the caller should ensure
-        // notes are saved before calling this
+        // Cancel all pending timeouts first
         foreach (var entry in pending_saves.entries) {
             Source.remove (entry.value);
         }
+        
+        // Force immediate save of all pending notes to prevent data loss
+        foreach (var entry in pending_notes.entries) {
+            perform_save (entry.value);
+        }
+        
         pending_saves.clear ();
+        pending_notes.clear ();
     }
     
     /**

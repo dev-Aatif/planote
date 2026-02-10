@@ -21,7 +21,7 @@
 
 public class Services.Database : GLib.Object {
     private Sqlite.Database db;
-    private string db_path;
+    internal string db_path;
     private string errormsg;
     private string sql;
 
@@ -1379,7 +1379,48 @@ public class Services.Database : GLib.Object {
         return return_value;
     }
 
+    /**
+     * Look up a project's parent_id directly from the database.
+     * Used for circular reference detection without going through Store cache.
+     */
+    private string? get_project_parent_id (string id) {
+        Sqlite.Statement stmt;
+        string lookup_sql = "SELECT parent_id FROM Projects WHERE id=$id;";
+        int res = db.prepare_v2 (lookup_sql, -1, out stmt);
+        if (res != Sqlite.OK) return null;
+        set_parameter_str (stmt, "$id", id);
+        if (stmt.step () == Sqlite.ROW) {
+            string? val = stmt.column_text (0);
+            return (val != null && val != "") ? val : null;
+        }
+        return null;
+    }
+
+    /**
+     * Look up an item's parent_id directly from the database.
+     * Used for circular reference detection without going through Store cache.
+     */
+    private string? get_item_parent_id (string id) {
+        Sqlite.Statement stmt;
+        string lookup_sql = "SELECT parent_id FROM Items WHERE id=$id;";
+        int res = db.prepare_v2 (lookup_sql, -1, out stmt);
+        if (res != Sqlite.OK) return null;
+        set_parameter_str (stmt, "$id", id);
+        if (stmt.step () == Sqlite.ROW) {
+            string? val = stmt.column_text (0);
+            return (val != null && val != "") ? val : null;
+        }
+        return null;
+    }
+
     public bool insert_project (Objects.Project project) {
+        // Validate inputs at database boundary
+        if (!Utils.Validation.is_valid_id (project.id)) {
+            warning ("Invalid project ID rejected: %s", project.id);
+            return false;
+        }
+        project.color = Utils.Validation.sanitize_color (project.color);
+
         Sqlite.Statement stmt;
 
         sql = """
@@ -1480,6 +1521,21 @@ public class Services.Database : GLib.Object {
     }
 
     public bool update_project (Objects.Project project) {
+        // Validate circular parent reference at database boundary
+        if (project.parent_id != null && project.parent_id != "") {
+            bool valid = Utils.Validation.check_deep_circular_reference (
+                project.id, project.parent_id,
+                (id) => {
+                    return get_project_parent_id (id);
+                }
+            );
+            if (!valid) {
+                warning ("Circular parent reference detected for project %s -> %s", project.id, project.parent_id);
+                return false;
+            }
+        }
+        project.color = Utils.Validation.sanitize_color (project.color);
+
         Sqlite.Statement stmt;
 
         sql = """
@@ -1918,6 +1974,14 @@ public class Services.Database : GLib.Object {
      */
 
     public bool insert_item (Objects.Item item, bool insert = true) {
+        // Validate inputs at database boundary
+        if (!Utils.Validation.is_valid_id (item.id)) {
+            warning ("Invalid item ID rejected: %s", item.id);
+            return false;
+        }
+        item.priority = Utils.Validation.normalize_priority (item.priority);
+        item.content = Utils.Validation.sanitize_content (item.content);
+
         Sqlite.Statement stmt;
 
         sql = """
@@ -2164,6 +2228,22 @@ public class Services.Database : GLib.Object {
     }
 
     public bool update_item (Objects.Item item, string update_id = "") {
+        // Validate circular parent reference at database boundary
+        if (item.parent_id != null && item.parent_id != "") {
+            bool valid = Utils.Validation.check_deep_circular_reference (
+                item.id, item.parent_id,
+                (id) => {
+                    return get_item_parent_id (id);
+                }
+            );
+            if (!valid) {
+                warning ("Circular parent reference detected for item %s -> %s", item.id, item.parent_id);
+                return false;
+            }
+        }
+        item.priority = Utils.Validation.normalize_priority (item.priority);
+        item.content = Utils.Validation.sanitize_content (item.content);
+
         item.updated_at = new GLib.DateTime.now_local ().to_string ();
         Sqlite.Statement stmt;
 

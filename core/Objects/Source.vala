@@ -167,7 +167,7 @@ public class Objects.Source : Objects.BaseObject {
         remove_sync_server ();
 
         // Remove DB
-        yield Services.Store.instance ().delete_source (this);
+        Services.Store.instance ().delete_source (this);
     }
 
     public string to_string () {

@@ -767,7 +767,7 @@ Notes in Planote are your **personal knowledge space** — a place to capture th
 ## 🎨 Key Features
 
 - **✅ Auto-Save** — Your changes are saved instantly, no manual saving needed
-- **✅ Rich Markdown** — Format text beautifully with simple syntax
+- **✅ Headings and Structure** — Use H1-H6 headings to organize your thoughts
 - **✅ Notebooks** — Organize notes into themed collections
 - **✅ Quick Search** — Find any note by title or content in seconds
 - **✅ Distraction-Free** — Clean interface focused on your writing
@@ -779,7 +779,7 @@ Notes in Planote are your **personal knowledge space** — a place to capture th
 1. **Create a new note** by clicking the `+` button
 2. **Give it a descriptive title** so you can find it later
 3. **Start writing** — your changes save automatically
-4. **Use Markdown** to add formatting (see the next note!)
+4. **Use Headings** to structure your content (see the next note!)
 5. **Organize** notes into notebooks for easy navigation
 
 ---
@@ -790,154 +790,48 @@ Notes in Planote are your **personal knowledge space** — a place to capture th
         
         Services.Store.instance ().insert_note (note_01);
         
-        // Note 2: Comprehensive Markdown Guide
+        // Note 2: Structuring Your Notes
         var note_02 = new Objects.Note ();
         note_02.id = Util.get_default ().generate_id ();
         note_02.notebook_id = notebook.id;
-        note_02.title = _("Markdown Formatting Guide 🎨");
-        note_02.content = _("""# Markdown Formatting Guide 🎨
+        note_02.title = _("Structuring Your Notes 🏗️");
+        note_02.content = _("""# Structuring Your Notes 🏗️
 
-Markdown is a simple way to format your text. Here's everything you need to know!
-
----
-
-## 📝 Text Formatting
-
-| Style | Syntax | Result |
-|-------|--------|--------|
-| Bold | `**text**` | **bold text** |
-| Italic | `*text*` | *italic text* |
-| Bold + Italic | `***text***` | ***bold and italic*** |
-| Strikethrough | `~~text~~` | ~~crossed out~~ |
-| Inline Code | `` `code` `` | `inline code` |
-
----
-
-## 📋 Lists
-
-### Unordered Lists
-```
-- Item one
-- Item two
-  - Nested item
-  - Another nested
-- Item three
-```
-
-**Result:**
-- Item one
-- Item two
-  - Nested item
-  - Another nested
-- Item three
-
-### Ordered Lists
-```
-1. First step
-2. Second step
-3. Third step
-```
-
-**Result:**
-1. First step
-2. Second step
-3. Third step
-
-### Task Lists
-```
-- [x] Completed task
-- [ ] Pending task
-- [ ] Another pending
-```
+Planote keeps things simple. We believe in structure over complex formatting.
 
 ---
 
 ## 🏷️ Headings
 
-```
+Use headings to organize your notes into sections. Planote supports 6 levels of headings:
+
 # Heading 1 (Largest)
 ## Heading 2
 ### Heading 3
 #### Heading 4
 ##### Heading 5
 ###### Heading 6 (Smallest)
-```
+
+To apply a heading, use the **Heading dropdown** in the toolbar.
 
 ---
 
-## 💬 Blockquotes
+## 📝 Paragraphs
 
-```
-> This is a quote.
-> It can span multiple lines.
->
-> — Author Name
-```
-
-**Result:**
-> This is a quote.
-> It can span multiple lines.
->
-> — Author Name
-
----
-
-## 🔗 Links & Images
-
-### Links
-```
-[Link Text](https://example.com)
-```
-Example: [Planote on GitHub](https://github.com/aatef-dev/planote)
-
----
-
-## 📊 Code Blocks
-
-### Inline Code
-Use backticks: `` `variable_name` `` → `variable_name`
-
-### Code Blocks with Syntax Highlighting
-````
-```python
-def greet(name):
-    return f"Hello, {name}!"
-
-print(greet("Planote"))
-```
-````
-
-**Result:**
-```python
-def greet(name):
-    return f"Hello, {name}!"
-
-print(greet("Planote"))
-```
-
----
-
-## ➖ Horizontal Rules
-
-Use three or more dashes, asterisks, or underscores:
-```
----
-***
-___
-```
+Everything else is treated as plain text. Just type and let your thoughts flow!
 
 ---
 
 ## 💡 Pro Tips
 
-1. **Preview as you type** — Changes render live
-2. **Keep it simple** — Don't over-format
-3. **Use headings** — They create structure
-4. **Blank lines matter** — Separate paragraphs with empty lines
+1. **Use H1 for Main Topics** — Like the title of a document
+2. **Use H2 for Major Sections** — Like chapters or key points
+3. **Use H3 for Details** — Breaking down sections further
+4. **Keep it simple** — Structure helps you read and scan notes quickly
 
 ---
 
-*Now you're ready to create beautifully formatted notes! ✨*""");
+*Now you're ready to create beautifully structured notes! ✨*""");
         
         Services.Store.instance ().insert_note (note_02);
         
@@ -1004,17 +898,17 @@ Set aside **15 minutes weekly** to:
 2. ✅ Update outdated information
 3. ✅ Archive or delete what you no longer need
 4. ✅ Move notes to appropriate notebooks
-5. ✅ Add missing titles or formatting
+5. ✅ Add missing titles
 
 ---
 
 ## 📐 Templates for Common Notes
 
 ### Meeting Notes Template
-```markdown
+
 # Meeting: [Topic]
 **Date:** YYYY-MM-DD
-**Attendees:** @person1, @person2
+**Attendees:** Person A, Person B
 
 ## Agenda
 1. Topic one
@@ -1025,15 +919,16 @@ Set aside **15 minutes weekly** to:
 - Decision made
 
 ## Action Items
-- [ ] Task 1 — @person1
-- [ ] Task 2 — @person2
+- Task 1 - Person A
+- Task 2 - Person B
 
 ## Next Steps
 - Follow-up date: YYYY-MM-DD
-```
+
+---
 
 ### Daily Journal Template
-```markdown
+
 # Journal: YYYY-MM-DD
 
 ## 🌅 Morning Intentions
@@ -1047,7 +942,6 @@ What went well? What could improve?
 
 ## 🙏 Gratitude
 Three things I'm grateful for today...
-```
 
 ---
 
@@ -1073,41 +967,37 @@ Speed up your workflow with these shortcuts and tips!
 |--------|----------|
 | New Note | `Ctrl + N` |
 | Search Notes | `Ctrl + F` |
-| Switch Notebook | `Ctrl + Tab` |
-| Go to Today | `Ctrl + T` |
-| Go to Inbox | `Ctrl + I` |
+| Go to Notes | `Ctrl + Shift + N` |
 
 ### Editing
 | Action | Shortcut |
 |--------|----------|
-| Bold | `Ctrl + B` |
-| Italic | `Ctrl + I` |
-| Save (manual) | `Ctrl + S` |
+| Select All | `Ctrl + A` |
 | Undo | `Ctrl + Z` |
-| Redo | `Ctrl + Shift + Z` |
+| Redo | `Ctrl + Y` |
 
 ### General
 | Action | Shortcut |
 |--------|----------|
 | Preferences | `Ctrl + ,` |
-| Quick Add | `Ctrl + Shift + N` |
 | Sync Now | `Ctrl + R` |
+| Fullscreen | `F11` |
 
 ---
 
 ## ⚡ Power User Tips
 
 ### 1. Quick Capture
-When an idea strikes, quickly create a note and capture it — don't worry about formatting. You can refine it later!
+When an idea strikes, quickly create a note and capture it. You can structure it with headings later!
 
 ### 2. Link Notes to Tasks
-Reference note IDs in your task descriptions to keep context handy.
+Reference note titles in your task descriptions to keep context handy.
 
 ### 3. Use Headers for Navigation
-Break long notes into sections with headers (`##`). This makes scrolling and finding info much easier.
+Break long notes into sections with headers (`H1`, `H2`). This makes scrolling and finding info much easier.
 
 ### 4. Archive Don't Delete
-Unsure about deleting a note? Move it to an "Archive" notebook instead. You might need it later!
+Unsure about deleting a note? Move it to an "Archive" notebook instead.
 
 ### 5. Export Important Notes
 For critical information, consider keeping a backup outside of Planote.
@@ -1118,9 +1008,6 @@ For critical information, consider keeping a backup outside of Planote.
 
 ### Auto-Save
 Your notes save **automatically** as you type. No need to manually save — ever! A small indicator shows when saving is in progress.
-
-### Rich Preview
-Markdown formatting renders in real-time, so you see exactly how your note will look.
 
 ### Quick Access
 Recently edited notes appear at the top of your notebook for fast access.
@@ -1153,7 +1040,7 @@ You now know everything to make the most of Planote Notes!
 **Remember:**
 - ✅ Capture ideas quickly
 - ✅ Organize with notebooks
-- ✅ Format with Markdown
+- ✅ Structure with Headings
 - ✅ Review regularly
 
 *Go ahead — delete these tutorial notes and start your own collection!*

@@ -9,7 +9,7 @@ void setup_test_store () {
     // Use a temporary database for test isolation
     if (!db_initialized) {
         var test_path = "/tmp/planote_store_test_%d.db".printf ((int) GLib.Random.next_int ());
-        Services.Database.get_default ().db_path = test_path;
+        Services.Database.set_test_path (test_path);
         Services.Database.get_default ().init_database ();
         db_initialized = true;
     }

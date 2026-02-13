@@ -183,15 +183,9 @@ public class Dialogs.NoteEditorDialog : Adw.Window {
             // Check for Ctrl modifier
             if ((state & Gdk.ModifierType.CONTROL_MASK) != 0) {
                 switch (keyval) {
-                    case Gdk.Key.b:
-                        editor.toggle_bold_format ();
-                        return true;
-                    case Gdk.Key.i:
-                        editor.toggle_italic_format ();
-                        return true;
-                    case Gdk.Key.minus:
-                        editor.toggle_strikethrough_format ();
-                        return true;
+                    /*
+                    // Formatting shortcuts removed
+                    */
                     case Gdk.Key.a:
                         editor.select_all ();
                         return true;
@@ -283,20 +277,6 @@ public class Dialogs.NoteEditorDialog : Adw.Window {
             margin_bottom = 6
         };
 
-        var bold_btn = create_toolbar_button ("text-bold-symbolic", _("Bold"));
-        bold_btn.clicked.connect (() => editor.toggle_bold_format ());
-        toolbar.append (bold_btn);
-
-        var italic_btn = create_toolbar_button ("text-italic-symbolic", _("Italic"));
-        italic_btn.clicked.connect (() => editor.toggle_italic_format ());
-        toolbar.append (italic_btn);
-
-        var strike_btn = create_toolbar_button ("text-strikethrough-symbolic", _("Strikethrough"));
-        strike_btn.clicked.connect (() => editor.toggle_strikethrough_format ());
-        toolbar.append (strike_btn);
-
-        toolbar.append (new Gtk.Separator (Gtk.Orientation.VERTICAL));
-
         // Heading dropdown (H1-H6)
         var heading_model = new Gtk.StringList (null);
         heading_model.append (_("Normal"));
@@ -318,44 +298,12 @@ public class Dialogs.NoteEditorDialog : Adw.Window {
         });
         toolbar.append (toolbar_heading_dropdown);
 
-        toolbar.append (new Gtk.Separator (Gtk.Orientation.VERTICAL));
-
-        var ul_btn = create_toolbar_button ("view-list-symbolic", _("Bulleted List"));
-        ul_btn.clicked.connect (() => editor.apply_unordered_list_format ());
-        toolbar.append (ul_btn);
-
-        var ol_btn = create_toolbar_button ("view-list-ordered-symbolic", _("Ordered List"));
-        ol_btn.clicked.connect (() => editor.apply_ordered_list_format ());
-        toolbar.append (ol_btn);
-
-        toolbar.append (new Gtk.Separator (Gtk.Orientation.VERTICAL));
-
-        var link_btn = create_toolbar_button ("chain-link-loose-symbolic", _("Link"));
-        link_btn.clicked.connect (() => editor.insert_link ());
-        toolbar.append (link_btn);
-
-        var code_btn = create_toolbar_button ("code-symbolic", _("Code"));
-        code_btn.clicked.connect (() => editor.toggle_code_format ());
-        toolbar.append (code_btn);
-
         return toolbar;
     }
 
-    private Gtk.Button create_toolbar_button (string icon_name, string tooltip) {
-        var btn = new Gtk.Button.from_icon_name (icon_name) {
-            tooltip_text = tooltip
-        };
-        btn.add_css_class ("flat");
-        return btn;
-    }
-
-    private Gtk.Button create_toolbar_button_label (string label, string tooltip) {
-        var btn = new Gtk.Button.with_label (label) {
-            tooltip_text = tooltip
-        };
-        btn.add_css_class ("flat");
-        return btn;
-    }
+    /*
+    // Toolbar helper methods removed
+    */
 
     private void apply_status_bar_alignment (Gtk.Box status_box, string alignment) {
         switch (alignment) {

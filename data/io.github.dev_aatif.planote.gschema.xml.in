@@ -387,5 +387,11 @@
             <summary>Status Bar Alignment</summary>
             <description>Alignment for autosave indicator and word counter: 'left', 'center', or 'right'</description>
         </key>
+
+        <key name="tutorial-notes-created" type="b">
+            <default>false</default>
+            <summary>Tutorial Notes Created</summary>
+            <description>Whether the tutorial notes have been created once already</description>
+        </key>
     </schema>
 </schemalist>

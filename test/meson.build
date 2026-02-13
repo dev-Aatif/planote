@@ -82,3 +82,43 @@ test_undo_manager = executable(
 
 test('undo-manager', test_undo_manager, timeout: 30, suite: ['unit'], env: test_env)
 
+
+# Adversarial / Chaos Tests
+test_adversarial = executable(
+    'test-adversarial',
+    'test-adversarial.vala',
+    dependencies: [ core_dep, glib_dep, gee_dep, sqlite3_dep ],
+    install: false
+)
+
+test('adversarial', test_adversarial, timeout: 60, suite: ['stress'], env: test_env)
+
+# Adversarial QA v2 — Chaos Engineering
+test_adversarial_v2 = executable(
+    'test-adversarial-v2',
+    'test-adversarial-v2.vala',
+    dependencies: [ core_dep, glib_dep, gee_dep, sqlite3_dep ],
+    install: false
+)
+
+test('adversarial-v2', test_adversarial_v2, timeout: 120, suite: ['stress'], env: test_env)
+
+# Verification Fixes Script
+test_verify_fixes = executable(
+    'test-verify-fixes',
+    'verify_fixes.vala',
+    dependencies: [ core_dep, glib_dep, gee_dep, sqlite3_dep ],
+    install: false
+)
+
+test('verify-fixes', test_verify_fixes, timeout: 30, suite: ['verification'], env: test_env)
+
+# Security Audit Test Suite
+test_audit = executable(
+    'test-audit',
+    'audit_suite.vala',
+    dependencies: [ core_dep, glib_dep, gee_dep, sqlite3_dep ],
+    install: false
+)
+
+test('audit', test_audit, timeout: 60, suite: ['audit'], env: test_env)

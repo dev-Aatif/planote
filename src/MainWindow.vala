@@ -165,13 +165,43 @@ public class MainWindow : Adw.ApplicationWindow {
 
             view_stack.visible_child = overlay_split_view;
 
-            if (Services.Store.instance ().is_sources_empty ()) {
-                Util.get_default ().create_local_source ();
+            // Self-healing: Ensure Local Source always exists
+            var local_source = Services.Store.instance ().get_source (SourceType.LOCAL.to_string ());
+            if (local_source == null) {
+                 Util.get_default ().create_local_source ();
             }
 
-            if (Services.Store.instance ().is_database_empty ()) {
-                Util.get_default ().create_inbox_project ();
-                Util.get_default ().create_tutorial_project ();
+            // Self-healing: Ensure Inbox Project exists
+            string inbox_id = Services.Settings.get_default ().settings.get_string ("local-inbox-project-id");
+            if (Services.Store.instance ().get_project (inbox_id) == null) {
+                bool found = false;
+                foreach (var p in Services.Store.instance ().projects) {
+                    if (p.inbox_project && p.source_id == SourceType.LOCAL.to_string ()) {
+                         Services.Settings.get_default ().settings.set_string ("local-inbox-project-id", p.id);
+                         found = true;
+                         break;
+                    }
+                }
+                if (!found) {
+                     Util.get_default ().create_inbox_project ();
+                }
+            }
+
+            // Self-healing: Ensure Tutorial Project exists if missing (Restores "Meet Tasks")
+            bool has_tutorial_project = false;
+            foreach (var p in Services.Store.instance ().projects) {
+                // Check by name as ID is random. Matches Util.create_tutorial_project()
+                if (p.name == _("Meet Tasks") && p.source_id == SourceType.LOCAL.to_string ()) {
+                    has_tutorial_project = true;
+                    break;
+                }
+            }
+            if (!has_tutorial_project) {
+                 Util.get_default ().create_tutorial_project ();
+            }
+            
+            // Self-healing: Ensure Default Labels exist
+            if (Services.Store.instance ().labels.size == 0) {
                 Util.get_default ().create_default_labels ();
             }
             
@@ -181,12 +211,24 @@ public class MainWindow : Adw.ApplicationWindow {
             if (existing_notebooks.size == 0) {
                 Util.get_default ().create_tutorial_notebook ();
             } else {
-                // Migration: Fix tutorial notebook that was incorrectly set as default
-                // This ensures existing users don't have notes going to the tutorial notebook
+                // Self-healing: Check if "Getting Started with Notes" exists
+                bool has_tutorial_notebook = false;
                 foreach (var notebook in existing_notebooks) {
-                    if (notebook.name == _("Getting Started with Notes") && notebook.is_default) {
-                        notebook.is_default = false;
-                        Services.Database.get_default ().update_notebook (notebook);
+                    if (notebook.name == _("Getting Started with Notes")) {
+                        has_tutorial_notebook = true;
+                         // Migration: Fix tutorial notebook that was incorrectly set as default
+                        if (notebook.is_default) {
+                            notebook.is_default = false;
+                            Services.Database.get_default ().update_notebook (notebook);
+                        }
+                    }
+                }
+                
+                if (!has_tutorial_notebook) {
+                    bool created = Services.Settings.get_default ().settings.get_boolean ("tutorial-notes-created");
+                    if (!created) {
+                        Util.get_default ().create_tutorial_notebook ();
+                        Services.Settings.get_default ().settings.set_boolean ("tutorial-notes-created", true);
                     }
                 }
             }
@@ -434,6 +476,27 @@ public class MainWindow : Adw.ApplicationWindow {
         var key_controller = new Gtk.EventControllerKey ();
         ((Gtk.Widget) this).add_controller (key_controller);
         key_controller.key_pressed.connect ((keyval, keycode, state) => {
+            // Avoid triggering if focus is on an entry or text view (except for Escape)
+            var focus = get_focus ();
+            bool is_editable = (focus != null && (focus is Gtk.Editable || focus is Gtk.TextView));
+
+            if (keyval == Gdk.Key.n && !is_editable && (state & Gdk.ModifierType.CONTROL_MASK) == 0) {
+                 if (views_stack.visible_child_name == "notes-view") {
+                    Views.Notes.Notes ? notes_view = (Views.Notes.Notes) views_stack.get_child_by_name ("notes-view");
+                    if (notes_view != null && notes_view.notebook != null) {
+                         var action = action_manager.actions.lookup_action (Services.ActionManager.ACTION_NEW_NOTE);
+                         if (action != null) action.activate (null);
+                         return true;
+                    }
+                 }
+                 
+                 // Default to New Notebook if not in a specific notebook view or just generally
+                 var dialog = new Dialogs.NotebookDialog ();
+                 dialog.transient_for = this;
+                 dialog.present (); 
+                 return true;
+            }
+
             if (keyval == Gdk.Key.Escape) {
                 Services.EventBus.get_default ().escape_pressed ();
                 

@@ -29,49 +29,6 @@ public class Services.Store : GLib.Object {
     }
 
     public static void hard_reset () {
-        // CFP-6 fix: Clear all internal state before nulling the singleton
-        // to prevent dangling references from cached objects
-        if (_instance != null) {
-            if (_instance._items_by_project_cache != null) {
-                _instance._items_by_project_cache.clear ();
-            }
-            if (_instance._sources != null) {
-                _instance._sources.clear ();
-                _instance._sources = null;
-            }
-            if (_instance._projects != null) {
-                _instance._projects.clear ();
-                _instance._projects = null;
-            }
-            if (_instance._sections != null) {
-                _instance._sections.clear ();
-                _instance._sections = null;
-            }
-            if (_instance._items != null) {
-                _instance._items.clear ();
-                _instance._items = null;
-            }
-            if (_instance._labels != null) {
-                _instance._labels.clear ();
-                _instance._labels = null;
-            }
-            if (_instance._reminders != null) {
-                _instance._reminders.clear ();
-                _instance._reminders = null;
-            }
-            if (_instance._attachments != null) {
-                _instance._attachments.clear ();
-                _instance._attachments = null;
-            }
-            if (_instance._notebooks != null) {
-                _instance._notebooks.clear ();
-                _instance._notebooks = null;
-            }
-            if (_instance._notes != null) {
-                _instance._notes.clear ();
-                _instance._notes = null;
-            }
-        }
         _instance = null;
     }
 
@@ -288,63 +245,28 @@ public class Services.Store : GLib.Object {
         }
     }
 
-    public void delete_source (Objects.Source source) {
-        // Collect projects to delete first
-        var projects_to_delete = new Gee.ArrayList<Objects.Project> ();
-        foreach (var project in get_projects_by_source (source.id)) {
-            projects_to_delete.add (project);
-        }
-
-        bool success = Services.Database.get_default ().run_transaction (() => {
-             // 1. Delete items for all projects
-             foreach (var project in projects_to_delete) {
-                 Services.Database.get_default ().delete_all_items_by_project (project);
-             }
-             
-             // 2. Delete sections for all projects
-             foreach (var project in projects_to_delete) {
-                 foreach (var section in get_sections_by_project (project)) {
-                     Services.Database.get_default ().delete_section (section);
-                 }
-             }
-
-             // 3. Delete the projects
-             foreach (var project in projects_to_delete) {
-                 Services.Database.get_default ().delete_project (project);
-             }
-
-             // 4. Delete the source itself
-             return Services.Database.get_default ().delete_source (source);
-        });
-
-        if (success) {
-            // Update cache after successful transaction
-            foreach (var project in projects_to_delete) {
-                // Determine sections/items for cache cleanup
-                 var sections = get_sections_by_project (project);
-                 var items = get_items_by_project (project);
-                 
-                 foreach (var item in items) {
-                    _items_by_project_cache.unset (item.project_id);
-                    item.deleted ();
-                    _items.remove (item);
-                 }
-                 
-                 foreach (var section in sections) {
-                    section.deleted ();
-                    _sections.remove (section);
-                 }
-
-                 project.deleted ();
-                 _projects.remove (project);
+    public async void delete_source (Objects.Source source) {
+        var projects = get_projects_by_source (source.id);
+        const int BATCH_SIZE = 5;
+        
+        for (int i = 0; i < projects.size; i += BATCH_SIZE) {
+            var batch_end = int.min (i + BATCH_SIZE, projects.size);
+            
+            for (int j = i; j < batch_end; j++) {
+                yield delete_project (projects[j]);
             }
             
-            // Fire signals
+            yield Util.nap (10);
+        }
+        
+        if (Services.Database.get_default ().delete_source (source)) {
+            foreach (Objects.Label label in get_labels_by_source (source.id)) {
+                delete_label (label);
+            }
+            
             source.deleted ();
             source_deleted (source);
             _sources.remove (source);
-        } else {
-             warning ("Failed to delete source %s transactionally.", source.id);
         }
     }
     
@@ -451,16 +373,6 @@ public class Services.Store : GLib.Object {
         var items = get_items_by_project (project);
         var subprojects = get_subprojects (project);
 
-        // Collect ALL subproject data recursively before the transaction
-        var all_subproject_data = new Gee.ArrayList<Gee.ArrayList<Object>> ();
-        foreach (Objects.Project subproject in subprojects) {
-            var sub_sections = get_sections_by_project (subproject);
-            var sub_items = get_items_by_project (subproject);
-            var data = new Gee.ArrayList<Object> ();
-            data.add (subproject);
-            all_subproject_data.add (data);
-        }
-
         project.freeze_update = true;
         
         #if WITH_EVOLUTION
@@ -473,80 +385,33 @@ public class Services.Store : GLib.Object {
         }
         #endif
         
-        // Execute ALL DB operations in a single transaction, including subprojects
-        bool success = Services.Database.get_default ().run_transaction (() => {
-            // 1. Delete all items for this project
-            Services.Database.get_default ().delete_all_items_by_project (project);
-            
-            // 2. Delete all sections for this project
-            foreach (Objects.Section section in sections) {
-                Services.Database.get_default ().delete_section (section);
-            }
-            
-            // 3. Delete subprojects and their items/sections atomically
-            foreach (Objects.Project subproject in subprojects) {
-                var sub_sections = get_sections_by_project (subproject);
-                Services.Database.get_default ().delete_all_items_by_project (subproject);
-                foreach (Objects.Section sub_section in sub_sections) {
-                    Services.Database.get_default ().delete_section (sub_section);
-                }
-                Services.Database.get_default ().delete_project (subproject);
-            }
-            
-            // 4. Delete the project itself
-            return Services.Database.get_default ().delete_project (project);
-        });
+        Services.Database.get_default ().delete_all_items_by_project (project);
+        foreach (Objects.Item item in items) {
+            _items_by_project_cache.unset (item.project_id);
+            item.deleted ();
+            _items.remove (item);
+            item_deleted (item);
+        }
+        
+        foreach (Objects.Section section in sections) {
+            Services.Database.get_default ().delete_section (section);
+            section.deleted ();
+            section_deleted (section);
+            _sections.remove (section);
+        }
+        
+        foreach (Objects.Project subproject in subprojects) {
+            yield delete_project (subproject);
+        }
 
-        // Only update in-memory state if DB transaction succeeded
-        if (success) {
-            // Update item cache
-            foreach (Objects.Item item in items) {
-                _items_by_project_cache.unset (item.project_id);
-                item.deleted ();
-                _items.remove (item);
-                item_deleted (item);
-            }
-            
-            // Update section cache
-            foreach (Objects.Section section in sections) {
-                section.deleted ();
-                section_deleted (section);
-                _sections.remove (section);
-            }
-            
-            // Update subproject caches
-            foreach (Objects.Project subproject in subprojects) {
-                var sub_sections = get_sections_by_project (subproject);
-                var sub_items = get_items_by_project (subproject);
-                
-                foreach (Objects.Item sub_item in sub_items) {
-                    _items_by_project_cache.unset (sub_item.project_id);
-                    sub_item.deleted ();
-                    _items.remove (sub_item);
-                    item_deleted (sub_item);
-                }
-                
-                foreach (Objects.Section sub_section in sub_sections) {
-                    sub_section.deleted ();
-                    section_deleted (sub_section);
-                    _sections.remove (sub_section);
-                }
-                
-                subproject.deleted ();
-                project_deleted (subproject);
-                _projects.remove (subproject);
-            }
-
-            project.freeze_update = false;
-            project.count_update ();
-            update_project (project);
-            
+        project.freeze_update = false;
+        project.count_update ();
+        update_project (project);
+        
+        if (Services.Database.get_default ().delete_project (project)) {
             project.deleted ();
             project_deleted (project);
             _projects.remove (project);
-        } else {
-            warning ("Failed to delete project %s transactionally. State preserved.", project.id);
-            project.freeze_update = false;
         }
     }
 
@@ -579,42 +444,27 @@ public class Services.Store : GLib.Object {
     }
 
     public void update_project_id (string current_id, string new_id) {
-        // SC-3 fix: All three ID updates must be atomic
-        bool success = Services.Database.get_default ().run_transaction (() => {
-            if (!Services.Database.get_default ().update_project_id (current_id, new_id)) {
-                return false;
-            }
-            if (!Services.Database.get_default ().update_project_section_id (current_id, new_id)) {
-                return false;
-            }
-            if (!Services.Database.get_default ().update_project_item_id (current_id, new_id)) {
-                return false;
-            }
-            return true;
-        });
-
-        // Only update in-memory cache if ALL DB operations succeeded
-        if (success) {
+        if (Services.Database.get_default ().update_project_id (current_id, new_id)) {
             Objects.Project ? project = get_project (current_id);
             if (project != null) {
                 project.id = new_id;
             }
 
-            foreach (var section in sections) {
-                if (section.project_id == current_id) {
-                    section.project_id = new_id;
+            if (Services.Database.get_default ().update_project_section_id (current_id, new_id)) {
+                foreach (var section in sections) {
+                    if (section.project_id == current_id) {
+                        section.project_id = new_id;
+                    }
+                }
+
+                if (Services.Database.get_default ().update_project_item_id (current_id, new_id)) {
+                    foreach (var item in items) {
+                        if (item.project_id == current_id) {
+                            item.project_id = new_id;
+                        }
+                    }
                 }
             }
-
-            foreach (var item in items) {
-                if (item.project_id == current_id) {
-                    item.project_id = new_id;
-                }
-            }
-
-            _items_by_project_cache.unset (current_id);
-        } else {
-            warning ("Failed to atomically update project ID from %s to %s. No changes made.", current_id, new_id);
         }
     }
 
@@ -706,35 +556,9 @@ public class Services.Store : GLib.Object {
     }
 
     public void delete_section (Objects.Section section) {
-        // Execute all DB operations in a single transaction
-        bool success = Services.Database.get_default ().run_transaction (() => {
+        if (Services.Database.get_default ().delete_section (section)) {
             foreach (Objects.Item item in section.items) {
-                // Determine if we need to call delete_item recursively or if we can batch delete
-                // For now, reuse delete_item logic but inside this transaction
-                // NOTE: delete_item is not currently transactional itself, so calling it here
-                // effectively includes its DB ops in this transaction.
-                Services.Database.get_default ().delete_item (item);
-                
-                // Recursively delete subitems from DB
-                foreach (Objects.Item subitem in get_subitems (item)) {
-                     Services.Database.get_default ().delete_item (subitem);
-                }
-            }
-            return Services.Database.get_default ().delete_section (section);
-        });
-
-        if (success) {
-            // Update cache after successful transaction
-            foreach (Objects.Item item in section.items) {
-                 foreach (Objects.Item subitem in get_subitems (item)) {
-                    _items_by_project_cache.unset (subitem.project_id);
-                    subitem.deleted ();
-                    _items.remove (subitem);
-                    item_deleted (subitem);
-                 }
-                 
-                _items_by_project_cache.unset (item.project_id);
-                delete_item_from_cache (item);
+                delete_item (item);
             }
 
             var project = get_project (section.project_id);
@@ -745,31 +569,7 @@ public class Services.Store : GLib.Object {
             section.deleted ();
             section_deleted (section);
             _sections.remove (section);
-        } else {
-             warning ("Failed to delete section %s transactionally.", section.id);
         }
-    }
-    
-    // Helper to remove item from cache without DB ops (since we did them in transaction)
-    private void delete_item_from_cache (Objects.Item item) {
-         // Cleanup Evolution event if needed (best effort, async)
-         #if WITH_EVOLUTION
-         if (item.calendar_event_uid != "" && item.project != null && item.project.calendar_source_uid != "") {
-             Services.CalendarEvents.get_default ().delete_event.begin (item.project.calendar_source_uid, item.calendar_event_uid);
-         }
-         #endif
-         
-         item.deleted ();
-         _items.remove (item);
-         item_deleted (item);
-
-         if (item.project != null) {
-             item.project.item_deleted (item);
-         }
-         
-         if (item.has_section && item.section != null) {
-             item.section.item_deleted (item);
-         }
     }
 
     public void move_section (Objects.Section section, string old_project_id) {
@@ -788,33 +588,20 @@ public class Services.Store : GLib.Object {
     }
 
     public void update_section_id (string current_id, string new_id) {
-        // CFP-4 fix: Wrap both DB operations in a transaction to prevent
-        // items becoming orphans if the second operation fails
-        bool success = Services.Database.get_default ().run_transaction (() => {
-            if (!Services.Database.get_default ().update_section_id (current_id, new_id)) {
-                return false;
-            }
-            if (!Services.Database.get_default ().update_section_item_id (current_id, new_id)) {
-                return false;
-            }
-            return true;
-        });
-
-        // Only update in-memory cache if ALL DB operations succeeded
-        if (success) {
+        if (Services.Database.get_default ().update_section_id (current_id, new_id)) {
             foreach (var section in sections) {
                 if (section.id == current_id) {
                     section.id = new_id;
                 }
             }
 
-            foreach (var item in items) {
-                if (item.section_id == current_id) {
-                    item.section_id = new_id;
+            if (Services.Database.get_default ().update_section_item_id (current_id, new_id)) {
+                foreach (var item in items) {
+                    if (item.section_id == current_id) {
+                        item.section_id = new_id;
+                    }
                 }
             }
-        } else {
-            warning ("Failed to atomically update section ID from %s to %s. No changes made.", current_id, new_id);
         }
     }
 
@@ -879,8 +666,11 @@ public class Services.Store : GLib.Object {
      */
 
     public void insert_item (Objects.Item item, bool insert = true) {
-        // CFP-1 fix: Content validation is handled by Database.insert_item()
-        // via Utils.Validation.sanitize_content() — single source of truth
+        if (item.content != null && item.content.length > 65536) {
+           message ("Item content exceeds 64KB limit. Rejected.");
+           return;
+        }
+
         if (Services.Database.get_default ().insert_item (item, insert)) {
             _items_by_project_cache.unset (item.project_id);
             add_item (item, insert);
@@ -979,19 +769,7 @@ public class Services.Store : GLib.Object {
     }
 
     public void delete_item (Objects.Item item) {
-        // CFP-2 fix: Collect all sub-items first, then delete atomically
-        var all_subitems = get_subitems (item);
-        
-        bool success = Services.Database.get_default ().run_transaction (() => {
-            // Delete all sub-items in the same transaction
-            foreach (Objects.Item subitem in all_subitems) {
-                Services.Database.get_default ().delete_item (subitem);
-            }
-            // Delete the parent item
-            return Services.Database.get_default ().delete_item (item);
-        });
-
-        if (success) {
+        if (Services.Database.get_default ().delete_item (item)) {
             _items_by_project_cache.unset (item.project_id);
 
             #if WITH_EVOLUTION
@@ -1000,12 +778,8 @@ public class Services.Store : GLib.Object {
             }
             #endif
 
-            // Update cache for sub-items
-            foreach (Objects.Item subitem in all_subitems) {
-                _items_by_project_cache.unset (subitem.project_id);
-                subitem.deleted ();
-                _items.remove (subitem);
-                item_deleted (subitem);
+            foreach (Objects.Item subitem in get_subitems (item)) {
+                delete_item (subitem);
             }
 
             item.deleted ();
@@ -1019,8 +793,6 @@ public class Services.Store : GLib.Object {
             if (item.has_section && item.section != null) {
                 item.section.item_deleted (item);
             }
-        } else {
-            warning ("Failed to delete item %s transactionally.", item.id);
         }
     }
 
@@ -1775,34 +1547,26 @@ public class Services.Store : GLib.Object {
     }
 
     public void delete_notebook (Objects.Notebook notebook) {
-        // Collect notes to delete first
-        var notes_to_delete = new Gee.ArrayList<Objects.Note> ();
-        foreach (Objects.Note note in get_notes_by_notebook (notebook.id)) {
-            notes_to_delete.add (note);
-        }
-
-        // Execute all DB operations in a single transaction
-        bool success = Services.Database.get_default ().run_transaction (() => {
-            foreach (Objects.Note note in notes_to_delete) {
-                Services.Database.get_default ().delete_note (note);
-            }
-            return Services.Database.get_default ().delete_notebook (notebook);
-        });
-
-        if (success) {
-            // Update cache after successful transaction
-            foreach (Objects.Note note in notes_to_delete) {
-                _notes.remove (note);
-                note.deleted_note ();
-                note_deleted (note);
+        if (Services.Database.get_default ().delete_notebook (notebook)) {
+            // Collect notes to delete first (avoid modifying collection while iterating)
+            var notes_to_delete = new Gee.ArrayList<Objects.Note> ();
+            foreach (Objects.Note note in get_notes_by_notebook (notebook.id)) {
+                notes_to_delete.add (note);
             }
             
+            // Delete notes from database and remove from collection
+            foreach (Objects.Note note in notes_to_delete) {
+                if (Services.Database.get_default ().delete_note (note)) {
+                    _notes.remove (note);
+                }
+            }
+            
+            // Remove notebook from collection first (before firing signals)
             _notebooks.remove (notebook);
             
+            // Fire signals after cleanup is done
             notebook.deleted ();
             notebook_deleted (notebook);
-        } else {
-            warning ("Failed to delete notebook %s transactionally.", notebook.id);
         }
     }
 

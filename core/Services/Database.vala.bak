@@ -273,7 +273,6 @@ public class Services.Database : GLib.Object {
         table_columns["Notebooks"].add ("source_id");
         table_columns["Notebooks"].add ("created_at");
         table_columns["Notebooks"].add ("updated_at");
-        table_columns["Notebooks"].add ("is_favorite");
 
         table_columns["Notes"] = new Gee.ArrayList<string> ();
         table_columns["Notes"].add ("id");
@@ -396,8 +395,7 @@ public class Services.Database : GLib.Object {
                 source_id               TEXT,
                 calendar_url            TEXT,
                 sorted_by               TEXT,
-                calendar_source_uid     TEXT,
-                FOREIGN KEY (source_id) REFERENCES Sources (id) ON DELETE CASCADE
+                calendar_source_uid     TEXT
             );
         """;
 
@@ -451,9 +449,7 @@ public class Services.Database : GLib.Object {
                 item_type           TEXT,
                 calendar_event_uid  TEXT,
                 deadline_date       TEXT,
-                responsible_uid     TEXT,
-                FOREIGN KEY (project_id) REFERENCES Projects (id) ON DELETE CASCADE,
-                FOREIGN KEY (section_id) REFERENCES Sections (id) ON DELETE CASCADE
+                responsible_uid     TEXT
             );
         """;
 
@@ -753,10 +749,6 @@ public class Services.Database : GLib.Object {
             END;
         """;
 
-        if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
-            warning (errormsg);
-        }
-
         sql = """
             CREATE TRIGGER IF NOT EXISTS after_update_section_item
             AFTER UPDATE ON Items
@@ -975,12 +967,6 @@ public class Services.Database : GLib.Object {
          * - Add is_favorite column to Notebooks
          */
         add_int_column ("Notebooks", "is_favorite", 0);
-
-        /*
-         * Planote - Fix Source Schema
-         * - Add updated_at column to Sources if missing
-         */
-        add_text_column ("Sources", "updated_at", "");
     }
 
     /**
@@ -1020,61 +1006,21 @@ public class Services.Database : GLib.Object {
         string[] tables = { "Sources", "Labels", "Projects", "Sections", "Items", 
                             "Reminders", "Notebooks", "Notes", "Attachments" };
         
-        bool all_success = true;
-        
-        // CFP-3 fix: Disable FK checks during restore to avoid order-dependent
-        // failures, and wrap in a transaction for atomicity
-        sql = "PRAGMA foreign_keys=OFF;";
-        db.exec (sql, null, out errormsg);
-        
-        sql = "BEGIN TRANSACTION;";
-        if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
-            warning ("Failed to begin restore transaction: %s", errormsg);
-            sql = "PRAGMA foreign_keys=ON;";
-            db.exec (sql, null, out errormsg);
-            return false;
-        }
-        
-        // 1. Clear all main tables first (respecting dependencies)
-        if (!clear_all_tables (false)) {
-            warning ("Failed to clear tables during restore");
-            db.exec ("ROLLBACK;", null, out errormsg);
-            sql = "PRAGMA foreign_keys=ON;";
-            db.exec (sql, null, out errormsg);
-            return false;
-        }
-
         foreach (var table in tables) {
+            // Clear the main table
+            sql = "DELETE FROM %s;".printf (table);
+            if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
+                warning ("Failed to clear table %s during restore: %s", table, errormsg);
+                // Continue trying to restore other tables
+            }
+            
             // Restore from backup
             sql = "INSERT INTO %s SELECT * FROM %s_backup;".printf (table, table);
             if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
                 warning ("Failed to restore table %s: %s", table, errormsg);
-                all_success = false;
+                // Continue trying to restore other tables
             }
         }
-        
-        if (!all_success) {
-            // Rollback the partial restore — better to leave DB empty
-            // than in a half-restored state
-            warning ("Restore had failures — rolling back to prevent corrupt state");
-            db.exec ("ROLLBACK;", null, out errormsg);
-            sql = "PRAGMA foreign_keys=ON;";
-            db.exec (sql, null, out errormsg);
-            return false;
-        }
-        
-        sql = "COMMIT;";
-        if (db.exec (sql, null, out errormsg) != Sqlite.OK) {
-            warning ("Failed to commit restore transaction: %s", errormsg);
-            db.exec ("ROLLBACK;", null, out errormsg);
-            sql = "PRAGMA foreign_keys=ON;";
-            db.exec (sql, null, out errormsg);
-            return false;
-        }
-        
-        // Re-enable FK checks
-        sql = "PRAGMA foreign_keys=ON;";
-        db.exec (sql, null, out errormsg);
         
         clear_temp_tables ();
         return true;
@@ -1326,21 +1272,8 @@ public class Services.Database : GLib.Object {
             return false;
         }
 
-        if (db.changes () == 0) {
-            warning ("Insert source ignored due to duplicate ID: %s", source.id);
-            return false;
-        }
-
         return true;
     }
-
-    // ... (rest of the file until insert_project)
-
-
-
-    // ... (rest of the file until insert_section)
-
-
 
     public bool delete_source (Objects.Source source) {
         Sqlite.Statement stmt;
@@ -1786,11 +1719,6 @@ public class Services.Database : GLib.Object {
             return false;
         }
 
-        if (db.changes () == 0) {
-            warning ("Insert label ignored due to duplicate ID: %s", label.id);
-            return false;
-        }
-
         return true;
     }
 
@@ -2095,9 +2023,9 @@ public class Services.Database : GLib.Object {
         set_parameter_str (stmt, "$added_at", item.added_at);
         set_parameter_str (stmt, "$completed_at", item.completed_at);
         set_parameter_str (stmt, "$updated_at", item.updated_at);
-        set_parameter_str (stmt, "$section_id", item.section_id == "" ? null : item.section_id);
+        set_parameter_str (stmt, "$section_id", item.section_id);
         set_parameter_str (stmt, "$project_id", item.project_id);
-        set_parameter_str (stmt, "$parent_id", item.parent_id == "" ? null : item.parent_id);
+        set_parameter_str (stmt, "$parent_id", item.parent_id);
         set_parameter_int (stmt, "$priority", item.priority);
         set_parameter_int (stmt, "$child_order", item.child_order);
         set_parameter_bool (stmt, "$checked", item.checked);
@@ -2110,16 +2038,11 @@ public class Services.Database : GLib.Object {
         set_parameter_str (stmt, "$item_type", item.item_type.to_string ());
         set_parameter_str (stmt, "$calendar_event_uid", item.calendar_event_uid);
         set_parameter_str (stmt, "$deadline_date", item.deadline_date);
-        set_parameter_str (stmt, "$responsible_uid", item.responsible_uid == "" ? null : item.responsible_uid);
+        set_parameter_str (stmt, "$responsible_uid", item.responsible_uid);
 
         int result = stmt.step ();
         if (result != Sqlite.DONE) {
             warning ("Error: %d: %s", db.errcode (), db.errmsg ());
-            return false;
-        }
-
-        if (db.changes () == 0) {
-            warning ("Insert item ignored due to duplicate ID: %s", item.id);
             return false;
         }
 
@@ -2162,9 +2085,9 @@ public class Services.Database : GLib.Object {
             set_parameter_str (stmt, "$added_at", item.added_at);
             set_parameter_str (stmt, "$completed_at", item.completed_at);
             set_parameter_str (stmt, "$updated_at", item.updated_at);
-            set_parameter_str (stmt, "$section_id", item.section_id == "" ? null : item.section_id);
+            set_parameter_str (stmt, "$section_id", item.section_id);
             set_parameter_str (stmt, "$project_id", item.project_id);
-            set_parameter_str (stmt, "$parent_id", item.parent_id == "" ? null : item.parent_id);
+            set_parameter_str (stmt, "$parent_id", item.parent_id);
             set_parameter_int (stmt, "$priority", item.priority);
             set_parameter_int (stmt, "$child_order", item.child_order);
             set_parameter_bool (stmt, "$checked", item.checked);
@@ -2177,24 +2100,11 @@ public class Services.Database : GLib.Object {
             set_parameter_str (stmt, "$item_type", item.item_type.to_string ());
             set_parameter_str (stmt, "$calendar_event_uid", item.calendar_event_uid);
             set_parameter_str (stmt, "$deadline_date", item.deadline_date);
-            set_parameter_str (stmt, "$responsible_uid", item.responsible_uid == "" ? null : item.responsible_uid);
+            set_parameter_str (stmt, "$responsible_uid", item.responsible_uid);
 
             int result = stmt.step ();
             if (result != Sqlite.DONE) {
                 warning ("Error: %d: %s", db.errcode (), db.errmsg ());
-                success = false;
-                break;
-            }
-
-            if (db.changes () == 0) {
-                warning ("Insert item transaction ignored duplicate ID: %s", item.id);
-                // Depending on requirements, we might want to fail the whole transaction or just skip this one.
-                // The current contract implies "insert or ignore", but the fix is to DETECT it.
-                // If we return success=false here, it rollbacks everything.
-                // The finding says: "INSERT OR IGNORE returns true on duplicates -> ghost items in cache".
-                // So we MUST return failure if any item fails to insert due to duplicate, OR at least warn and NOT cache it?
-                // But this method returns bool success. If it returns false, Store won't cache it.
-                // So returning false on duplicate is correct to prevent cache divergence.
                 success = false;
                 break;
             }
@@ -2602,12 +2512,6 @@ public class Services.Database : GLib.Object {
 
     // Atrachments
     public bool insert_attachment (Objects.Attachment attachment) {
-        // BS-2 fix: Reject paths with directory traversal or absolute paths
-        if (attachment.file_path.contains ("..") || attachment.file_path.has_prefix ("/")) {
-            warning ("Rejected attachment with unsafe file_path: %s", attachment.file_path);
-            return false;
-        }
-
         Sqlite.Statement stmt;
         string sql;
 
@@ -3245,11 +3149,6 @@ public class Services.Database : GLib.Object {
             return false;
         }
 
-        if (db.changes () == 0) {
-            warning ("Insert notebook ignored due to duplicate ID: %s", notebook.id);
-            return false;
-        }
-
         return true;
     }
 
@@ -3438,11 +3337,6 @@ public class Services.Database : GLib.Object {
         int result = stmt.step ();
         if (result != Sqlite.DONE) {
             warning ("Error: %d: %s", db.errcode (), db.errmsg ());
-            return false;
-        }
-
-        if (db.changes () == 0) {
-            warning ("Insert note ignored due to duplicate ID: %s", note.id);
             return false;
         }
 

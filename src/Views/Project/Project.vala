@@ -294,15 +294,24 @@ public class Views.Project : Adw.Bin {
         // Get the default notebook for quick notes
         Objects.Notebook? notebook = Services.Store.instance ().get_default_notebook ();
         
-        // If no default notebook exists, create one for user's quick notes
+        // If no default notebook exists, try to find "Inbox" or create it
         if (notebook == null) {
-            notebook = new Objects.Notebook ();
-            notebook.name = _("Quick Notes");
-            notebook.icon = "📓";
-            notebook.color = "blue";
-            notebook.is_default = true;
-            notebook.description = _("Your personal notes");
-            Services.Store.instance ().insert_notebook (notebook);
+            foreach (var nb in Services.Store.instance ().notebooks) {
+                if (nb.name == _("Inbox")) {
+                    notebook = nb;
+                    break;
+                }
+            }
+            
+            if (notebook == null) {
+                notebook = new Objects.Notebook ();
+                notebook.name = _("Inbox"); // Changed from "Quick Notes"
+                notebook.icon = "inbox-symbolic"; // Changed icon to match inbox concept
+                notebook.color = "blue";
+                notebook.is_default = true;
+                notebook.description = _("Your personal notes");
+                Services.Store.instance ().insert_notebook (notebook);
+            }
         }
         
         // Create the note

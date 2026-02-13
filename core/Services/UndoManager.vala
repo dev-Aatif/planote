@@ -85,15 +85,16 @@ public class Services.DeleteItemCommand : Services.Command {
     }
     
     public override bool execute () {
-        // Backup item state before deletion
-        item_backup = item;
+        // Backup item state before deletion using deep clone
+        item_backup = item.clone ();
         Services.Store.instance ().delete_item (item);
         return true;
     }
     
     public override bool undo () {
         if (item_backup != null) {
-            // Restore the item
+            // Restore the item from backup
+            // Ensure we use the backup state, but set is_deleted to false just in case it was captured as true (which shouldn't happen if captured before delete)
             item_backup.is_deleted = false;
             Services.Store.instance ().insert_item (item_backup, true);
             return true;
@@ -104,58 +105,78 @@ public class Services.DeleteItemCommand : Services.Command {
 
 /**
  * Command to update an item.
+ * CFP-2 fix: Uses cloned snapshot and boolean flags instead of shared
+ * references and empty-string sentinels.
  */
 public class Services.UpdateItemCommand : Services.Command {
-    private Objects.Item item;
+    private string item_id;
     private string update_id;
     private string old_content;
     private string new_content;
     private string old_description;
     private string new_description;
+    private bool has_content_change;
+    private bool has_description_change;
     
     public UpdateItemCommand (Objects.Item item, string update_id = "") {
-        this.item = item;
+        this.item_id = item.id;
         this.update_id = update_id;
-        // Backup will be set when execute is called
-        this.old_content = "";
-        this.new_content = "";
-        this.old_description = "";
-        this.new_description = "";
+        // Snapshot current state at command creation time
+        this.old_content = item.content;
+        this.new_content = item.content;
+        this.old_description = item.description;
+        this.new_description = item.description;
+        this.has_content_change = false;
+        this.has_description_change = false;
     }
     
     public void set_content_change (string old_val, string new_val) {
         this.old_content = old_val;
         this.new_content = new_val;
+        this.has_content_change = true;
     }
     
     public void set_description_change (string old_val, string new_val) {
         this.old_description = old_val;
         this.new_description = new_val;
+        this.has_description_change = true;
     }
     
     public override string description {
-        owned get { return "Update task: %s".printf (item.content); }
+        owned get { return "Update task: %s".printf (new_content); }
     }
     
     public override bool execute () {
-        if (new_content != "") {
-            item.content = new_content;
+        // Look up the live item by ID — never hold a stale reference
+        var live_item = Services.Store.instance ().get_item (item_id);
+        if (live_item == null) {
+            warning ("UpdateItemCommand: item %s no longer exists", item_id);
+            return false;
         }
-        if (new_description != "") {
-            item.description = new_description;
+        if (has_content_change) {
+            live_item.content = new_content;
         }
-        Services.Store.instance ().update_item (item, update_id);
+        if (has_description_change) {
+            live_item.description = new_description;
+        }
+        Services.Store.instance ().update_item (live_item, update_id);
         return true;
     }
     
     public override bool undo () {
-        if (old_content != "") {
-            item.content = old_content;
+        // Look up the live item by ID — never hold a stale reference
+        var live_item = Services.Store.instance ().get_item (item_id);
+        if (live_item == null) {
+            warning ("UpdateItemCommand.undo: item %s no longer exists", item_id);
+            return false;
         }
-        if (old_description != "") {
-            item.description = old_description;
+        if (has_content_change) {
+            live_item.content = old_content;
         }
-        Services.Store.instance ().update_item (item, update_id);
+        if (has_description_change) {
+            live_item.description = old_description;
+        }
+        Services.Store.instance ().update_item (live_item, update_id);
         return true;
     }
 }

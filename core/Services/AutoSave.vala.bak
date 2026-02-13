@@ -25,8 +25,7 @@ public class Services.AutoSave : GLib.Object {
     private static AutoSave? _instance;
     
     private Gee.HashMap<string, uint> pending_saves;
-    private Gee.HashMap<string, Objects.Note> pending_notes;
-    private bool is_flushing;  // CFP-5 fix: guard against concurrent flush + timeout
+    private Gee.HashMap<string, unowned Objects.Note> pending_notes;
     private const uint DEBOUNCE_MS = 2000;  // 2 second debounce
     
     public static AutoSave get_default () {
@@ -38,8 +37,7 @@ public class Services.AutoSave : GLib.Object {
     
     construct {
         pending_saves = new Gee.HashMap<string, uint> ();
-        pending_notes = new Gee.HashMap<string, Objects.Note> ();
-        is_flushing = false;
+        pending_notes = new Gee.HashMap<string, unowned Objects.Note> ();
     }
     
     /**
@@ -48,27 +46,13 @@ public class Services.AutoSave : GLib.Object {
      * @param note The note to save
      */
     public void schedule_save (Objects.Note note) {
-        // Don't schedule during flush — flush_all handles it
-        if (is_flushing) return;
-        
         // Cancel existing pending save for this note
         cancel (note.id);
         
-        // CFP-5 fix: Capture the note ID at schedule time so the closure
-        // doesn't depend on a potentially-mutated reference
-        string note_id = note.id;
-        
         // Schedule new save after debounce delay
         uint timeout_id = Timeout.add (DEBOUNCE_MS, () => {
-            // Don't fire if we're in the middle of a flush
-            if (is_flushing) return GLib.Source.REMOVE;
-            
-            if (pending_notes.has_key (note_id)) {
-                var pending_note = pending_notes.get (note_id);
-                perform_save (pending_note);
-                pending_saves.unset (note_id);
-                pending_notes.unset (note_id);
-            }
+            perform_save (note);
+            pending_saves.unset (note.id);
             return GLib.Source.REMOVE;
         });
         
@@ -93,41 +77,18 @@ public class Services.AutoSave : GLib.Object {
      * Call this before app close to ensure no data loss.
      */
     public void flush_all () {
-        // CFP-5 fix: Set flushing flag to prevent timeout callbacks from
-        // firing concurrently
-        is_flushing = true;
-        
-        // 1. Snapshot keys first to avoid concurrent modification issues
-        var keys = new Gee.ArrayList<string> ();
-        foreach (var key in pending_saves.keys) {
-            keys.add (key);
+        // Cancel all pending timeouts first
+        foreach (var entry in pending_saves.entries) {
+            Source.remove (entry.value);
         }
         
-        // 2. Cancel timeouts for these keys
-        foreach (var key in keys) {
-            if (pending_saves.has_key (key)) {
-                Source.remove (pending_saves.get (key));
-                pending_saves.unset (key);
-            }
-        }
-        
-        // 3. Collect pending notes to save (snapshot values)
-        var notes_to_save = new Gee.ArrayList<Objects.Note> ();
-        foreach (var key in keys) {
-            if (pending_notes.has_key (key)) {
-                notes_to_save.add (pending_notes.get (key));
-                pending_notes.unset (key);
-            }
-        }
-        
-        // 4. Force save for all pending notes
-        foreach (var note in notes_to_save) {
-            perform_save (note);
+        // Force immediate save of all pending notes to prevent data loss
+        foreach (var entry in pending_notes.entries) {
+            perform_save (entry.value);
         }
         
         pending_saves.clear ();
         pending_notes.clear ();
-        is_flushing = false;
     }
     
     /**

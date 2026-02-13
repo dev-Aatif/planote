@@ -397,43 +397,152 @@ public class Objects.Item : Objects.BaseObject {
 
     }
 
-    public void update_from_json (Json.Node node) {
-        project_id = node.get_object ().get_string_member ("project_id");
-        content = node.get_object ().get_string_member ("content");
-        description = node.get_object ().get_string_member ("description");
-        checked = node.get_object ().get_boolean_member ("checked");
-        priority = (int32) node.get_object ().get_int_member ("priority");
-        is_deleted = node.get_object ().get_boolean_member ("is_deleted");
-        added_at = node.get_object ().get_string_member ("added_at");
-        check_labels (get_labels_maps_from_json (node));
-        child_order = (int32) node.get_object ().get_int_member ("child_order");
+    public Json.Node to_json_node () {
+        var builder = new Json.Builder ();
+        builder.begin_object ();
+        builder.set_member_name ("id");
+        builder.add_string_value (id);
+        builder.set_member_name ("project_id");
+        builder.add_string_value (project_id);
+        builder.set_member_name ("content");
+        builder.add_string_value (content);
+        builder.set_member_name ("description");
+        builder.add_string_value (description);
+        builder.set_member_name ("checked");
+        builder.add_boolean_value (checked);
+        builder.set_member_name ("priority");
+        builder.add_int_value (priority);
+        builder.set_member_name ("is_deleted");
+        builder.add_boolean_value (is_deleted);
+        builder.set_member_name ("added_at");
+        builder.add_string_value (added_at);
+        builder.set_member_name ("child_order");
+        builder.add_int_value (child_order);
+        builder.set_member_name ("day_order");
+        builder.add_int_value (day_order);
+        builder.set_member_name ("updated_at");
+        builder.add_string_value (updated_at);
 
-        if (!node.get_object ().get_null_member ("section_id")) {
-            section_id = node.get_object ().get_string_member ("section_id");
+        if (section_id != "") {
+            builder.set_member_name ("section_id");
+            builder.add_string_value (section_id);
+        }
+
+        if (parent_id != "") {
+             builder.set_member_name ("parent_id");
+             builder.add_string_value (parent_id);
+        }
+
+        if (completed_at != "") {
+            builder.set_member_name ("completed_at");
+            builder.add_string_value (completed_at);
+        }
+
+        if (responsible_uid != "") {
+            builder.set_member_name ("responsible_uid");
+            builder.add_string_value (responsible_uid);
+        }
+
+        // Serialize due date as nested object
+        if (due != null && due.date != "") {
+            builder.set_member_name ("due");
+            builder.begin_object ();
+            builder.set_member_name ("date");
+            builder.add_string_value (due.date);
+            builder.set_member_name ("timezone");
+            builder.add_string_value (due.time_zone);
+            builder.set_member_name ("is_recurring");
+            builder.add_boolean_value (due.is_recurring);
+            builder.set_member_name ("recurrency_type");
+            builder.add_string_value (((int) due.recurrency_type).to_string ());
+            builder.set_member_name ("recurrency_interval");
+            builder.add_string_value (due.recurrency_interval.to_string ());
+            builder.set_member_name ("recurrency_weeks");
+            builder.add_string_value (due.recurrency_weeks);
+            builder.set_member_name ("recurrency_count");
+            builder.add_string_value (due.recurrency_count.to_string ());
+            builder.set_member_name ("recurrency_end");
+            builder.add_string_value (due.recurrency_end);
+            builder.end_object ();
+        }
+        
+        // Serialize labels
+        builder.set_member_name ("labels");
+        builder.begin_array ();
+        foreach (var label in labels) {
+             builder.add_string_value (label.name);
+        }
+        builder.end_array ();
+        
+        builder.end_object ();
+        
+        return builder.get_root ();
+    }
+
+    public Objects.Item clone () {
+        var new_item = new Objects.Item ();
+        // Use the serialization method for most fields
+        new_item.update_from_json (this.to_json_node ());
+        
+        // Copy extra fields that might not be in JSON
+        new_item.id = this.id;
+        new_item.collapsed = this.collapsed;
+        new_item.pinned = this.pinned;
+        new_item.extra_data = this.extra_data;
+        new_item.item_type = this.item_type;
+        new_item.calendar_event_uid = this.calendar_event_uid;
+        new_item.deadline_date = this.deadline_date;
+        new_item.day_order = this.day_order;
+        new_item.updated_at = this.updated_at;
+        
+        // Deep copy due date to prevent shared mutable state
+        if (this.due != null) {
+            new_item.due = this.due.duplicate ();
+        }
+        
+        return new_item;
+    }
+
+    public void update_from_json (Json.Node node) {
+        var obj = node.get_object ();
+        if (obj == null) return;
+
+        if (obj.has_member ("project_id")) project_id = obj.get_string_member ("project_id");
+        if (obj.has_member ("content")) content = obj.get_string_member ("content");
+        if (obj.has_member ("description")) description = obj.get_string_member ("description");
+        if (obj.has_member ("checked")) checked = obj.get_boolean_member ("checked");
+        if (obj.has_member ("priority")) priority = (int32) obj.get_int_member ("priority");
+        if (obj.has_member ("is_deleted")) is_deleted = obj.get_boolean_member ("is_deleted");
+        if (obj.has_member ("added_at")) added_at = obj.get_string_member ("added_at");
+        if (obj.has_member ("labels")) check_labels (get_labels_maps_from_json (node));
+        if (obj.has_member ("child_order")) child_order = (int32) obj.get_int_member ("child_order");
+
+        if (obj.has_member ("section_id") && !obj.get_null_member ("section_id")) {
+            section_id = obj.get_string_member ("section_id");
         } else {
             section_id = "";
         }
 
-        if (!node.get_object ().get_null_member ("parent_id")) {
-            parent_id = node.get_object ().get_string_member ("parent_id");
+        if (obj.has_member ("parent_id") && !obj.get_null_member ("parent_id")) {
+            parent_id = obj.get_string_member ("parent_id");
         } else {
             parent_id = "";
         }
 
-        if (!node.get_object ().get_null_member ("completed_at")) {
-            completed_at = node.get_object ().get_string_member ("completed_at");
+        if (obj.has_member ("completed_at") && !obj.get_null_member ("completed_at")) {
+            completed_at = obj.get_string_member ("completed_at");
         } else {
             completed_at = "";
         }
 
-        if (!node.get_object ().get_null_member ("due")) {
-            due.update_from_json (node.get_object ().get_object_member ("due"));
+        if (obj.has_member ("due") && !obj.get_null_member ("due")) {
+            due.update_from_json (obj.get_object_member ("due"));
         } else {
             due.reset ();
         }
 
-        if (!node.get_object ().get_null_member ("responsible_uid")) {
-            responsible_uid = node.get_object ().get_string_member ("responsible_uid");
+        if (obj.has_member ("responsible_uid") && !obj.get_null_member ("responsible_uid")) {
+            responsible_uid = obj.get_string_member ("responsible_uid");
         } else {
             responsible_uid = "";
         }

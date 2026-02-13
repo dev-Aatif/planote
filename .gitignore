@@ -23,3 +23,12 @@ ninja_log*.txt
 repro
 test_env
 test_sqlite
+
+# Database artifacts
+*.db
+*.db-shm
+*.db-wal
+
+# Build directories
+build_audit
+build_audit_new

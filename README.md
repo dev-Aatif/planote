@@ -8,13 +8,14 @@
 
 ## About
 
-Planote is a beautiful and powerful note-taking application, forked from [Planify](https://github.com/alainm23/planify) by Alain M. It combines powerful task management with elegant note-taking features.
+Planote is a beautiful and powerful note-taking application, forked from [Planify](https://github.com/alainm23/planify) by Alain M. It combines powerful task management with a focused, distraction-free note-taking experience.
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
 
 - **🚀 Modern Interface**: Clean, intuitive design built with GTK4 and libadwaita
+- **📝 Focused Note Editor**: A distraction-free environment for your thoughts, supporting structured Headings (H1-H6) for organization.
 - **🤚 Drag & Drop**: Effortlessly organize notes, tasks, and projects
 - **💯 Progress Tracking**: Visual indicators show completion status at a glance
 - **📂 Smart Organization**: Group items into sections with custom labels
@@ -22,7 +23,6 @@ Planote is a beautiful and powerful note-taking application, forked from [Planif
 - **⏰ Flexible Reminders**: Multiple reminders per task
 - **🌙 Dark Mode**: Seamless integration with system themes
 - **🔍 Quick Search**: Find anything instantly
-- **📝 Markdown Support**: Rich text formatting for notes and descriptions
 
 ### ☁️ Cloud Synchronization
 
@@ -32,86 +32,37 @@ Planote is a beautiful and powerful note-taking application, forked from [Planif
 
 _Note: Planote is not created by, affiliated with, or supported by Doist_
 
+## 📚 Documentation
+
+Detailed documentation is available in the `docs/` directory:
+
+-   **[User Guide](docs/user_guide.md)**: How to use Planote, including the new simplified editor.
+-   **[Development Guide](docs/development.md)**: Build instructions, project structure, and IDE setup.
+-   **[Testing Guide](docs/testing.md)**: Running tests and debugging.
+-   **[Deployment Guide](docs/deployment.md)**: Packaging and release process.
+
+## 📰 Changelog & Releases
+
+-   Check **[CHANGELOG.md](CHANGELOG.md)** for a history of changes.
+-   See specific **[RELEASE_NOTES.md](RELEASE_NOTES.md)** for release highlights.
+
 ## 📥 Installation
 
-### 🛠 Build from Source
+For detailed build instructions, please refer to the **[Development Guide](docs/development.md)**.
 
-<details>
-<summary><strong>System Requirements & Dependencies</strong></summary>
-
-**Build Dependencies:**
-
-| Package            | Version  |
-| ------------------ | -------- |
-| meson              | ≥ 0.56   |
-| valac              | ≥ 0.48   |
-| gio-2.0            | ≥ 2.80.3 |
-| glib-2.0           | ≥ 2.80.3 |
-| gee-0.8            | ≥ 0.20.6 |
-| gtk4               | ≥ 4.14.4 |
-| libsoup-3.0        | ≥ 3.4.4  |
-| sqlite3            | ≥ 3.45.1 |
-| libadwaita-1       | ≥ 1.5.3  |
-| webkitgtk-6.0      | ≥ 2.44.3 |
-| json-glib-1.0      | ≥ 1.8.0  |
-| libecal-2.0        | ≥ 3.52.4 |
-| libedataserver-1.2 | ≥ 3.52.4 |
-| libportal          | ≥ 0.7.1  |
-| libportal-gtk4     | ≥ 0.7.1  |
-| gxml-0.20          | ≥ 0.21.0 |
-| libsecret-1        | ≥ 0.21.4 |
-| libspelling-dev    | latest   |
-| gtksourceview-5    | 5.12.1   |
-
-**Install Dependencies:**
-
-**Fedora/RHEL:**
+### Quick Build
 
 ```bash
-sudo dnf install vala meson ninja-build gtk4-devel libadwaita-devel libgee-devel libsoup3-devel webkitgtk6.0-devel libportal-devel libportal-gtk4-devel evolution-devel libspelling-devel gtksourceview5-devel
-```
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt install valac meson ninja-build libgtk-4-dev libadwaita-1-dev libgee-0.8-dev libjson-glib-dev libecal2.0-dev libsoup-3.0-dev libwebkitgtk-6.0-dev libportal-dev libportal-gtk4-dev libspelling-1-dev libgtksourceview-5-dev
-```
-
-</details>
-
-**Build Instructions:**
-
-```bash
-# Clone the repository
-git clone https://github.com/dev-Aatif/planote.git
-cd planote
-
-# Configure build
 meson build --prefix=/usr
-
-# Compile
 cd build
 ninja
-
-# Install
 sudo ninja install
-
-# Run
 io.github.dev_aatif.planote
 ```
 
-### 🏗️ Development Setup
-
-**Using GNOME Builder:**
-
-1. Install [GNOME Builder](https://apps.gnome.org/Builder/)
-2. Clone this repository
-3. Open the project in GNOME Builder
-4. Click "Run" to build and test
-
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome! Please feel free to submit issues and pull requests. See the **[Development Guide](docs/development.md)** for more info.
 
 ## 📋 Credits
 

@@ -57,6 +57,7 @@ public class Layouts.Sidebar : Adw.Bin {
         notebooks_header.add_widget_end (add_notebook_button);
         add_notebook_button.clicked.connect (() => {
              var dialog = new Dialogs.NotebookDialog ();
+             dialog.transient_for = Planote._instance.main_window;
              dialog.present ();
         });
 

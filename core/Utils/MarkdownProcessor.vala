@@ -166,7 +166,16 @@ public class MarkdownProcessor : Object {
                     var full_match = match_info.fetch (0);
                     var link_text = match_info.fetch (1);
                     var link_url = match_info.fetch (2);
-                    var replacement = @"<a href=\"$link_url\">$link_text</a>";
+                    string replacement;
+                    
+                    if (link_url.has_prefix ("http://") || 
+                        link_url.has_prefix ("https://") || 
+                        link_url.has_prefix ("mailto:")) {
+                        replacement = @"<a href=\"$link_url\">$link_text</a>";
+                    } else {
+                        // Safe fallback: don't linkify unsafe protocols (e.g. javascript:)
+                        replacement = link_text;
+                    }
 
                     matches.add (MarkupMatch (start_pos, end_pos, full_match, replacement, MarkupPriority.URL_MARKDOWN));
                 }

@@ -11,6 +11,10 @@ subprojects/gxml**/
 planify*txt
 .flatpak
 .buildconfig
+build-release/
+repo/
+*.flatpak
+_build/
 
 # Logs
 *.log

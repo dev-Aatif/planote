@@ -1,0 +1,7 @@
+# backup copy of /home/archon/0_lab/01_dev/forks/planote/.gnome-builder/flatpak/filter, do not edit!
+deny *
+allow runtime/org.freedesktop.*
+allow runtime/org.gnome.*
+allow runtime/io.elementary.*
+allow runtime/org.kde.*
+allow app/*.BaseApp
